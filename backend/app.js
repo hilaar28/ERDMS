@@ -4,6 +4,13 @@ import cors from 'cors';
 import ingestionRouter from './routes/ingestion.js';
 import documentRouter from './routes/documents.js';
 import { initIngestionSchema } from './models/ingestion.js';
+import { initializeIndexTables } from './models/indexing.js';
+import { initializeAuthTables, initializeCmsTables } from './models/rbac.js';
+import { initializeVersioningTables } from './models/versions.js';
+import indexRouter from './routes/index.js';
+import authRouter from './routes/auth.js';
+import cmsRouter from './routes/cms-gateway.js';
+import versionsRouter from './routes/versions.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -25,6 +32,10 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 // Routes
 app.use('/api/ingestion', ingestionRouter);
 app.use('/api/documents', documentRouter);
+app.use('/api/index', indexRouter);
+app.use('/api/auth', authRouter);
+app.use('/api/cms', cmsRouter);
+app.use('/api/versioning', versionsRouter);
 
 // Health check
 app.get('/health', (req, res) => {
@@ -35,7 +46,11 @@ app.get('/health', (req, res) => {
 // schema exists could let requests hit routes that query tables that
 // haven't been created yet.
 initIngestionSchema()
-  .then(() => {
+  .then(async () => {
+    await initializeIndexTables();
+    await initializeAuthTables();
+    await initializeCmsTables();
+    await initializeVersioningTables();
     app.listen(PORT, () => {
       console.log(`ERDMS Server running on port ${PORT}`);
     });

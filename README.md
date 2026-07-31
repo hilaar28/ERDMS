@@ -48,11 +48,31 @@ erdms-workspace/
    - Multi-file uploads
    - Email monitoring
    - File validation & categorization
+   - Content-based file validation (magic bytes)
+
+2. **Metadata & Indexing Engine** ✅
+   - Full-text search with PostgreSQL TSVECTOR
+   - Tagging system with document-tag associations
+   - Automatic document indexing
+   - Search by content or tags
+   - GIN indexes for optimized query performance
+
+3. **RBAC & Identity Module** ✅
+   - User registration and login with bcrypt password hashing
+   - JWT token-based authentication
+   - Role-based access control with granular permissions
+   - Default roles: Administrator, Records Officer, Department Head, General User
+   - Permission management (document:create/read/update/delete, user management, system admin)
+   - Session management with token invalidation
+
+4. **Legal CMS API Gateway** ✅
+   - External case integration via axios HTTP client
+   - Document synchronization from external CMS systems
+   - Document-to-case linking functionality
+   - Case document retrieval
+   - Configurable API credentials and endpoints
 
 ## Roadmap
-- [ ] Metadata & Indexing Engine
-- [ ] RBAC & Identity Module
-- [ ] Legal CMS API Gateway
 - [ ] Version Control & Collaboration
 - [ ] Workflow Automation & Approval
 - [ ] Retention & Disposition

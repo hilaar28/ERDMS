@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import DocumentList from './DocumentList';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api/documents';
 
 const RegistrationForm: React.FC = () => {
   const [newDocName, setNewDocName] = useState('');
@@ -14,7 +14,7 @@ const RegistrationForm: React.FC = () => {
 
   const fetchDocuments = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/documents/documents`);
+      const response = await fetch(`${API_URL}/documents`);
       if (response.ok) {
         const data = await response.json();
         setDocuments(data.data || []);
@@ -49,31 +49,45 @@ const handleSubmit = async (e: React.FormEvent) => {
     try {
       const formData = new FormData();
       formData.append('document', selectedFile);
-      formData.append('documentMetadata', JSON.stringify({ 
-        name: newDocName.trim(), 
-        department: department.trim(), 
-        province: province.trim() 
+      formData.append('documentMetadata', JSON.stringify({
+        name: newDocName.trim(),
+        department: department.trim(),
+        province: province.trim()
       }));
 
-      const response = await fetch(`${API_URL}/api/documents/upload`, {
+      const response = await fetch(`${API_URL}/upload`, {
         method: 'POST',
         body: formData
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Registration failed');
+      let responseBody: any = null;
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        responseBody = await response.json();
       }
 
-      setMessage({ type: 'success', text: 'Document registered successfully!' });
+      if (!response.ok) {
+        const errorMsg = responseBody?.error || responseBody?.message || `HTTP ${response.status}: Registration failed`;
+        throw new Error(errorMsg);
+      }
+
+      setMessage({ type: 'success', text: (responseBody?.message || responseBody?.success) ? 'Document registered successfully!' : 'Document registered successfully!' });
       setNewDocName('');
       setSelectedFile(null);
       setDepartment('');
       setProvince('');
       fetchDocuments();
     } catch (error: unknown) {
-      const text = error instanceof Error ? error.message : 'Registration failed';
+      let text: string;
+      if (error instanceof Error) {
+        text = error.message;
+      } else if (typeof error === 'string') {
+        text = error;
+      } else {
+        text = 'Registration failed - please check your connection and try again';
+      }
       setMessage({ type: 'error', text });
+      console.error('Document registration error:', error);
     } finally {
       setLoading(false);
     }

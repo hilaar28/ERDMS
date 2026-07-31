@@ -3,6 +3,7 @@ import multer from 'multer';
 import path from 'path';
 import pool from '../db.js';
 import { validateFile } from '../utils/fileValidation.js';
+import { createVersion, createAuditLog } from '../models/versions.js';
 
 const router = express.Router();
 
@@ -23,10 +24,9 @@ router.post('/upload', upload.single('document'), async (req, res) => {
     const file = req.file;
     const rawMetadata = req.body.documentMetadata;
 
-    // Parse documentMetadata - it could be a stringified JSON or an object
     let metadata;
     try {
-      metadata = typeof rawMetadata === 'string' ? JSON.parse(rawMetadata) : rawMetadata;
+      metadata = typeof rawMetadata === 'string' ? JSON.parse(rawMetadata) : (rawMetadata || { name: 'Untitled' });
     } catch (e) {
       metadata = { name: 'Untitled' };
     }
@@ -41,7 +41,7 @@ router.post('/upload', upload.single('document'), async (req, res) => {
     }
 
     const result = await pool.query(
-      'INSERT INTO documents (name, original_filename, stored_filename, file_path, file_size, mime_type, bucket_name, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP) RETURNING id',
+      'INSERT INTO documents (name, original_filename, stored_filename, file_path, file_size, mime_type, bucket_name, department, province, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP) RETURNING id',
       [
         metadata.name,
         file.originalname,
@@ -49,18 +49,57 @@ router.post('/upload', upload.single('document'), async (req, res) => {
         path.join('uploads/', file.filename),
         file.size,
         file.mimetype,
-        process.env.MINIO_BUCKET || 'erkms-bucks'
+        process.env.MINIO_BUCKET || 'erkms-bucks',
+        metadata.department || '',
+        metadata.province || ''
       ]
     );
 
+    const documentId = result.rows[0].id;
+
+    await createVersion(documentId, {
+      name: metadata.name,
+      original_filename: file.originalname,
+      stored_filename: file.filename,
+      file_path: path.join('uploads/', file.filename),
+      file_size: file.size,
+      mime_type: file.mimetype,
+      department: metadata.department || '',
+      province: metadata.province || '',
+      bucket_name: process.env.MINIO_BUCKET || 'erkms-bucks',
+      created_by: req.user?.id || null
+    });
+
+    await createAuditLog({
+      document_id: documentId,
+      user_id: req.user?.id || null,
+      action: 'document_upload',
+      resource_type: 'document',
+      resource_id: documentId,
+      old_values: null,
+      new_values: {
+        name: metadata.name,
+        original_filename: file.originalname,
+        file_size: file.size,
+        mime_type: file.mimetype,
+        department: metadata.department || '',
+        province: metadata.province || ''
+      },
+      ip_address: req.ip,
+      user_agent: req.get('User-Agent')
+    });
+
     res.status(201).json({
       success: true,
-      documentId: result.rows[0].id,
+      documentId: documentId,
       document: {
-        id: result.rows[0].id,
+        id: documentId,
         name: metadata.name,
-        storedFilename: file.filename
-      }
+        storedFilename: file.filename,
+        department: metadata.department || '',
+        province: metadata.province || ''
+      },
+      version: 1
     });
 
   } catch (error) {
@@ -70,6 +109,26 @@ router.post('/upload', upload.single('document'), async (req, res) => {
       error: 'Document upload failed',
       details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
+  }
+});
+
+// Get document with version history and metadata
+router.get('/documents/:id', async (req, res) => {
+  try {
+    const docId = parseInt(req.params.id);
+    const result = await pool.query(
+      'SELECT * FROM documents WHERE id = $1',
+      [docId]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: 'Document not found' });
+    }
+
+    res.json({ data: result.rows[0] });
+  } catch (error) {
+    console.error('Document retrieval error:', error);
+    res.status(500).json({ error: 'Failed to retrieve document' });
   }
 });
 

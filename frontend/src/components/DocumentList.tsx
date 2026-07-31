@@ -11,9 +11,10 @@ interface Document {
 
 interface DocumentListProps {
   documents: Document[];
+  onAction?: (documentId: number, action: 'history' | 'collab') => void;
 }
 
-const DocumentList: React.FC<DocumentListProps> = ({ documents }) => {
+const DocumentList: React.FC<DocumentListProps> = ({ documents, onAction }) => {
   return (
     <div>
       <h2>Registered Documents</h2>
@@ -26,6 +27,9 @@ const DocumentList: React.FC<DocumentListProps> = ({ documents }) => {
             <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '2px solid #ddd' }}>Size</th>
             <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '2px solid #ddd' }}>Type</th>
             <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '2px solid #ddd' }}>Created</th>
+            {onAction && (
+              <th style={{ padding: '0.75rem', textAlign: 'center', borderBottom: '2px solid #ddd' }}>Actions</th>
+            )}
           </tr>
         </thead>
         <tbody>
@@ -37,6 +41,41 @@ const DocumentList: React.FC<DocumentListProps> = ({ documents }) => {
               <td style={{ padding: '0.75rem' }}>{doc.file_size ? `${(doc.file_size / 1024).toFixed(1)} KB` : 'N/A'}</td>
               <td style={{ padding: '0.75rem' }}>{doc.mime_type || 'N/A'}</td>
               <td style={{ padding: '0.75rem' }}>{new Date(doc.created_at).toLocaleString()}</td>
+              {onAction && (
+                <td style={{ padding: '0.75rem', textAlign: 'center' }}>
+                  <button
+                    onClick={() => onAction(doc.id, 'history')}
+                    style={{
+                      padding: '0.3rem 0.6rem',
+                      marginRight: '0.3rem',
+                      backgroundColor: '#007bff',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      fontSize: '0.8rem'
+                    }}
+                    title="View version history & audit log"
+                  >
+                    History
+                  </button>
+                  <button
+                    onClick={() => onAction(doc.id, 'collab')}
+                    style={{
+                      padding: '0.3rem 0.6rem',
+                      backgroundColor: '#17a2b8',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      fontSize: '0.8rem'
+                    }}
+                    title="View comments & workflow"
+                  >
+                    Collaborate
+                  </button>
+                </td>
+              )}
             </tr>
           ))}
         </tbody>
