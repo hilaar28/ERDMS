@@ -11,7 +11,7 @@ import AuditTrail from './AuditTrail';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api/documents';
 
-const Dashboard: React.FC = () => {
+const Dashboard: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
   const [activeModule, setActiveModule] = useState('dashboard');
   const [documents, setDocuments] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -49,6 +49,7 @@ const Dashboard: React.FC = () => {
   const handleLogout = () => {
     localStorage.removeItem('token');
     setUser(null);
+    if (onLogout) onLogout();
   };
 
   const handleDocumentAction = (documentId: number, action: 'history' | 'collab') => {

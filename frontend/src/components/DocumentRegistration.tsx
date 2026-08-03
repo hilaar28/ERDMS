@@ -97,7 +97,6 @@ const DocumentRegistration: React.FC<DocumentRegistrationProps> = ({ API_URL }) 
   return (
     <div>
       <div style={{ marginBottom: '2rem', padding: '1.5rem', backgroundColor: '#f9f9f9', borderRadius: '8px' }}>
-        <h2 style={{ color: '#333', marginTop: '0' }}>Register New Document</h2>
         <form onSubmit={handleSubmit}>
           <div style={{ marginBottom: '1rem' }}>
             <label htmlFor="documentName" style={{ display: 'block', marginBottom: '0.5rem' }}>
