@@ -139,6 +139,30 @@ router.get('/users', requireAuth, requirePermission('user:read'), async (req, re
   }
 });
 
+router.get('/roles', requireAuth, requirePermission('role:manage'), async (req, res) => {
+  try {
+    const result = await pool.query('SELECT id, name, description FROM roles ORDER BY name');
+    return res.json({ data: result.rows });
+  } catch (err) {
+    console.error('Get roles error:', err);
+    return res.status(500).json({ error: 'Failed to fetch roles' });
+  }
+});
+
+router.get('/users/:id/roles', requireAuth, requirePermission('user:read'), async (req, res) => {
+  try {
+    const user = await getUserById(parseInt(req.params.id));
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    const roles = await getUserRoles(parseInt(req.params.id));
+    return res.json({ data: roles });
+  } catch (err) {
+    console.error('Get user roles error:', err);
+    return res.status(500).json({ error: 'Failed to fetch user roles' });
+  }
+});
+
 router.get('/users/:id', requireAuth, requirePermission('user:read'), async (req, res) => {
   try {
     const user = await getUserById(parseInt(req.params.id));

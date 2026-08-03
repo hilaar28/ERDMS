@@ -4,30 +4,45 @@ interface AuthModuleProps {
   API_URL: string;
 }
 
+interface User {
+  id: number;
+  username: string;
+  email: string;
+  full_name: string;
+  is_active: boolean;
+  created_at: string;
+}
+
+interface Role {
+  id: number;
+  name: string;
+  description: string;
+}
+
 const AuthModule: React.FC<AuthModuleProps> = ({ API_URL }) => {
-  const [activeTab, setActiveTab] = useState<'login' | 'register'>('login');
-  const [username, setUsername] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [fullName, setFullName] = useState('');
-  const [message, setMessage] = useState<{ type: string; text: string }>({ type: '', text: '' });
+  const [activeTab, setActiveTab] = useState<'users' | 'roles'>('users');
+  const [users, setUsers] = useState<User[]>([]);
+  const [roles, setRoles] = useState<Role[]>([]);
+  const [userRoles, setUserRoles] = useState<Record<number, Role[]>>({});
   const [loading, setLoading] = useState(false);
-  const [users, setUsers] = useState<any[]>([]);
-  const [token, setToken] = useState('');
+  const [message, setMessage] = useState<{ type: string; text: string }>({ type: '', text: '' });
+  const authUrl = API_URL.replace('/documents', '/auth');
+  const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
+  const [selectedRoleId, setSelectedRoleId] = useState('');
 
   useEffect(() => {
-    const savedToken = localStorage.getItem('token');
-    if (savedToken) {
-      setToken(savedToken);
-      fetchUsers(savedToken);
-    }
+    fetchUsers();
+    fetchRoles();
   }, []);
 
-  const fetchUsers = async (authToken: string) => {
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem('token');
+    return token ? { 'Authorization': `Bearer ${token}` } : {};
+  };
+
+  const fetchUsers = async () => {
     try {
-      const response = await fetch(`${API_URL.replace('/documents', '/auth')}/users`, {
-        headers: { 'Authorization': `Bearer ${authToken}` }
-      });
+      const response = await fetch(`${authUrl}/users`, { headers: getAuthHeaders() });
       if (response.ok) {
         const data = await response.json();
         setUsers(data.data || []);
@@ -37,142 +52,119 @@ const AuthModule: React.FC<AuthModuleProps> = ({ API_URL }) => {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const fetchRoles = async () => {
+    try {
+      const response = await fetch(`${authUrl}/roles`, { headers: getAuthHeaders() });
+      if (response.ok) {
+        const data = await response.json();
+        setRoles(data.data || []);
+      }
+    } catch (error) {
+      console.error('Failed to fetch roles:', error);
+    }
+  };
+
+  const fetchUserRoles = async (userId: number) => {
+    try {
+      const response = await fetch(`${authUrl}/users/${userId}/roles`, { headers: getAuthHeaders() });
+      if (response.ok) {
+        const data = await response.json();
+        setUserRoles(prev => ({ ...prev, [userId]: data.data || [] }));
+      }
+    } catch (error) {
+      console.error('Failed to fetch user roles:', error);
+    }
+  };
+
+  const handleAssignRole = async () => {
+    if (!selectedUserId || !selectedRoleId) {
+      setMessage({ type: 'error', text: 'Please select both user and role' });
+      return;
+    }
+
     setLoading(true);
     setMessage({ type: '', text: '' });
 
-    const endpoint = activeTab === 'login' ? 'login' : 'register';
-    const payload = activeTab === 'login'
-      ? { username, password }
-      : { username, email, full_name: fullName, password };
-
     try {
-      const response = await fetch(`${API_URL.replace('/documents', '/auth')}/${endpoint}`, {
+      const response = await fetch(`${authUrl}/users/${selectedUserId}/roles`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders()
+        },
+        body: JSON.stringify({ roleId: parseInt(selectedRoleId) })
       });
 
       const data = await response.json();
       if (response.ok) {
-        if (activeTab === 'login' && data.token) {
-          localStorage.setItem('token', data.token);
-          setToken(data.token);
-          setMessage({ type: 'success', text: `Logged in as ${data.user?.username || 'User'}` });
-          fetchUsers(data.token);
-        } else {
-          setMessage({ type: 'success', text: data.message || 'Operation successful' });
-        }
+        setMessage({ type: 'success', text: 'Role assigned successfully' });
+        fetchUserRoles(selectedUserId);
+        fetchUsers();
       } else {
-        setMessage({ type: 'error', text: data.error || 'Operation failed' });
+        setMessage({ type: 'error', text: data.error || 'Failed to assign role' });
       }
     } catch (error) {
-      setMessage({ type: 'error', text: 'Connection error - please check your server' });
+      setMessage({ type: 'error', text: 'Connection error' });
     } finally {
       setLoading(false);
+      setSelectedUserId(null);
+      setSelectedRoleId('');
     }
   };
 
+  const handleRemoveRole = async (userId: number, roleId: number) => {
+    try {
+      const response = await fetch(`${authUrl}/users/${userId}/roles/${roleId}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders()
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        setMessage({ type: 'success', text: 'Role removed successfully' });
+        fetchUserRoles(userId);
+      } else {
+        setMessage({ type: 'error', text: data.error || 'Failed to remove role' });
+      }
+    } catch (error) {
+      setMessage({ type: 'error', text: 'Connection error' });
+    }
+  };
+
+  const tabs = [
+    { id: 'users', label: 'Users & Roles', icon: '👥' },
+    { id: 'roles', label: 'Role Definitions', icon: '🔐' },
+  ];
+
   return (
     <div>
-      <h1 style={{ color: '#333' }}>User Management</h1>
-      <div style={{ marginBottom: '1rem' }}>
-        <button
-          onClick={() => setActiveTab('login')}
-          style={{
-            padding: '0.5rem 1rem',
-            marginRight: '0.5rem',
-            backgroundColor: activeTab === 'login' ? '#007bff' : '#f0f0f0',
-            color: activeTab === 'login' ? 'white' : '#333',
-            border: '1px solid #ddd',
-            borderRadius: '4px',
-            cursor: 'pointer'
-          }}
-        >
-          Login
-        </button>
-        <button
-          onClick={() => setActiveTab('register')}
-          style={{
-            padding: '0.5rem 1rem',
-            backgroundColor: activeTab === 'register' ? '#007bff' : '#f0f0f0',
-            color: activeTab === 'register' ? 'white' : '#333',
-            border: '1px solid #ddd',
-            borderRadius: '4px',
-            cursor: 'pointer'
-          }}
-        >
-          Register
-        </button>
+      <div style={{ marginBottom: '1.5rem' }}>
+        <div style={{ display: 'flex', gap: '0.5rem', borderBottom: '2px solid #ddd' }}>
+          {tabs.map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              style={{
+                padding: '0.75rem 1.5rem',
+                backgroundColor: activeTab === tab.id ? '#007bff' : 'transparent',
+                color: activeTab === tab.id ? 'white' : '#666',
+                border: 'none',
+                borderBottom: activeTab === tab.id ? '3px solid #007bff' : 'none',
+                cursor: 'pointer',
+                fontSize: '0.9rem'
+              }}
+            >
+              {tab.icon} {tab.label}
+            </button>
+          ))}
+        </div>
       </div>
-
-      <form onSubmit={handleSubmit} style={{ marginBottom: '2rem', maxWidth: '400px' }}>
-        {activeTab === 'register' && (
-          <>
-            <div style={{ marginBottom: '1rem' }}>
-              <label style={{ display: 'block', marginBottom: '0.5rem' }}>Full Name</label>
-              <input
-                type="text"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                style={{ width: '100%', padding: '0.75rem', border: '1px solid #ddd', borderRadius: '4px' }}
-                required
-              />
-            </div>
-            <div style={{ marginBottom: '1rem' }}>
-              <label style={{ display: 'block', marginBottom: '0.5rem' }}>Email</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                style={{ width: '100%', padding: '0.75rem', border: '1px solid #ddd', borderRadius: '4px' }}
-                required
-              />
-            </div>
-          </>
-        )}
-        <div style={{ marginBottom: '1rem' }}>
-          <label style={{ display: 'block', marginBottom: '0.5rem' }}>Username</label>
-          <input
-            type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            style={{ width: '100%', padding: '0.75rem', border: '1px solid #ddd', borderRadius: '4px' }}
-            required
-          />
-        </div>
-        <div style={{ marginBottom: '1rem' }}>
-          <label style={{ display: 'block', marginBottom: '0.5rem' }}>Password</label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            style={{ width: '100%', padding: '0.75rem', border: '1px solid #ddd', borderRadius: '4px' }}
-            required
-          />
-        </div>
-        <button
-          type="submit"
-          disabled={loading}
-          style={{
-            padding: '0.75rem 1.5rem',
-            backgroundColor: loading ? '#ccc' : '#28a745',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: loading ? 'not-allowed' : 'pointer'
-          }}
-        >
-          {loading ? 'Processing...' : activeTab === 'login' ? 'Login' : 'Register'}
-        </button>
-      </form>
 
       {message.text && (
         <div style={{
-          padding: '1rem',
+          padding: '0.75rem',
           borderRadius: '4px',
-          marginBottom: '1rem',
+          marginBottom: '1.5rem',
           backgroundColor: message.type === 'error' ? '#f8d7da' : '#d4edda',
           color: message.type === 'error' ? '#721c24' : '#155724'
         }}>
@@ -180,25 +172,131 @@ const AuthModule: React.FC<AuthModuleProps> = ({ API_URL }) => {
         </div>
       )}
 
-      {token && users.length > 0 && (
-        <div style={{ marginTop: '2rem' }}>
-          <h3 style={{ color: '#333' }}>Registered Users</h3>
+      {activeTab === 'users' && (
+        <div>
+          <div style={{ marginBottom: '2rem' }}>
+            <h3 style={{ color: '#333' }}>Assign Role to User</h3>
+            <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', alignItems: 'flex-end' }}>
+              <div style={{ flex: 1 }}>
+                <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.85rem' }}>User</label>
+                <select
+                  value={selectedUserId || ''}
+                  onChange={(e) => setSelectedUserId(parseInt(e.target.value) || null)}
+                  style={{ width: '100%', padding: '0.5rem', border: '1px solid #ddd', borderRadius: '4px' }}
+                >
+                  <option value="">Select User</option>
+                  {users.map(user => (
+                    <option key={user.id} value={user.id}>{user.full_name || user.username}</option>
+                  ))}
+                </select>
+              </div>
+              <div style={{ flex: 1 }}>
+                <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.85rem' }}>Role</label>
+                <select
+                  value={selectedRoleId}
+                  onChange={(e) => setSelectedRoleId(e.target.value)}
+                  style={{ width: '100%', padding: '0.5rem', border: '1px solid #ddd', borderRadius: '4px' }}
+                >
+                  <option value="">Select Role</option>
+                  {roles.map(role => (
+                    <option key={role.id} value={role.id}>{role.name}</option>
+                  ))}
+                </select>
+              </div>
+              <button
+                onClick={handleAssignRole}
+                disabled={loading || !selectedUserId || !selectedRoleId}
+                style={{
+                  padding: '0.5rem 1rem',
+                  backgroundColor: '#28a745',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  marginBottom: '0.5rem'
+                }}
+              >
+                {loading ? 'Assigning...' : 'Assign'}
+              </button>
+            </div>
+          </div>
+
+          <h3 style={{ color: '#333' }}>User List</h3>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ backgroundColor: '#f5f5f5' }}>
-                <th style={{ padding: '0.5rem', textAlign: 'left' }}>ID</th>
-                <th style={{ padding: '0.5rem', textAlign: 'left' }}>Username</th>
-                <th style={{ padding: '0.5rem', textAlign: 'left' }}>Email</th>
-                <th style={{ padding: '0.5rem', textAlign: 'left' }}>Full Name</th>
+                <th style={{ padding: '0.75rem', textAlign: 'left' }}>ID</th>
+                <th style={{ padding: '0.75rem', textAlign: 'left' }}>Full Name</th>
+                <th style={{ padding: '0.75rem', textAlign: 'left' }}>Username</th>
+                <th style={{ padding: '0.75rem', textAlign: 'left' }}>Email</th>
+                <th style={{ padding: '0.75rem', textAlign: 'left' }}>Roles</th>
+                <th style={{ padding: '0.75rem', textAlign: 'left' }}>Created</th>
+                <th style={{ padding: '0.75rem', textAlign: 'center' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {users.map(user => (
-                <tr key={user.id} style={{ borderBottom: '1px solid #eee' }}>
-                  <td style={{ padding: '0.5rem' }}>{user.id}</td>
-                  <td style={{ padding: '0.5rem' }}>{user.username}</td>
-                  <td style={{ padding: '0.5rem' }}>{user.email}</td>
-                  <td style={{ padding: '0.5rem' }}>{user.full_name}</td>
+              {users.map(user => {
+                const userRoleList = userRoles[user.id] || [];
+                return (
+                  <tr key={user.id} style={{ borderBottom: '1px solid #eee' }}>
+                    <td style={{ padding: '0.75rem' }}>{user.id}</td>
+                    <td style={{ padding: '0.75rem' }}>{user.full_name || '-'}</td>
+                    <td style={{ padding: '0.75rem' }}>{user.username}</td>
+                    <td style={{ padding: '0.75rem' }}>{user.email}</td>
+                    <td style={{ padding: '0.75rem' }}>
+                      {userRoleList.length > 0
+                        ? userRoleList.map(r => r.name).join(', ')
+                        : <span style={{ color: '#999' }}>No roles</span>}
+                    </td>
+                    <td style={{ padding: '0.75rem' }}>{new Date(user.created_at).toLocaleDateString()}</td>
+                    <td style={{ padding: '0.75rem', textAlign: 'center' }}>
+                      <button
+                        onClick={() => {
+                          if (userRoles[user.id]) {
+                            setUserRoles(prev => ({ ...prev, [user.id]: [] }));
+                          } else {
+                            fetchUserRoles(user.id);
+                          }
+                        }}
+                        style={{
+                          padding: '0.3rem 0.6rem',
+                          backgroundColor: '#007bff',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          fontSize: '0.8rem'
+                        }}
+                      >
+                        {userRoles[user.id] ? 'Hide Roles' : 'Show Roles'}
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+          {users.length === 0 && <p style={{ color: '#999', textAlign: 'center', marginTop: '2rem' }}>No users found</p>}
+        </div>
+      )}
+
+      {activeTab === 'roles' && (
+        <div>
+          <h3 style={{ color: '#333' }}>Role Definitions</h3>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr style={{ backgroundColor: '#f5f5f5' }}>
+                <th style={{ padding: '0.75rem', textAlign: 'left' }}>ID</th>
+                <th style={{ padding: '0.75rem', textAlign: 'left' }}>Role Name</th>
+                <th style={{ padding: '0.75rem', textAlign: 'left' }}>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              {roles.map(role => (
+                <tr key={role.id} style={{ borderBottom: '1px solid #eee' }}>
+                  <td style={{ padding: '0.75rem' }}>{role.id}</td>
+                  <td style={{ padding: '0.75rem', fontWeight: 500 }}>{role.name}</td>
+                  <td style={{ padding: '0.75rem' }}>{role.description}</td>
                 </tr>
               ))}
             </tbody>
