@@ -221,7 +221,7 @@ const DocumentRegistration: React.FC<DocumentRegistrationProps> = ({ API_URL }) 
       </div>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-        <h2 style={{ color: '#333', margin: 0 }}>Registered Documents</h2>
+        <h2 style={{ color: '#333', margin: 0 }}>Documents</h2>
         <button
           onClick={fetchDocuments}
           style={{
