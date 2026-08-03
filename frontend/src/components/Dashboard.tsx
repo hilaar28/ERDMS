@@ -7,6 +7,7 @@ import CmsModule from './CmsModule';
 import VersionHistory from './VersionHistory';
 import CollaborationPanel from './CollaborationPanel';
 import RetentionModule from './RetentionModule';
+import AuditTrail from './AuditTrail';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api/documents';
 
@@ -68,6 +69,7 @@ const Dashboard: React.FC = () => {
     { id: 'cms', label: 'Legal CMS', icon: '🏛️' },
     { id: 'auth', label: 'User Management', icon: '👥' },
     { id: 'retention', label: 'Retention & Disposal', icon: '🗑️' },
+    { id: 'audit', label: 'Immutable Audit Trail', icon: '🔐' },
   ];
 
   const renderModule = () => {
@@ -133,6 +135,8 @@ const Dashboard: React.FC = () => {
         return <AuthModule API_URL={API_URL} />;
       case 'retention':
         return <RetentionModule API_URL={API_URL} />;
+      case 'audit':
+        return <AuditTrail API_URL={API_URL} />;
       default:
         return null;
     }

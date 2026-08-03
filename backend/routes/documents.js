@@ -4,6 +4,7 @@ import path from 'path';
 import pool from '../db.js';
 import { validateFile } from '../utils/fileValidation.js';
 import { createVersion, createAuditLog } from '../models/versions.js';
+import { createImmutableAuditEntry } from '../models/auditTrail.js';
 
 const router = express.Router();
 
@@ -71,6 +72,25 @@ router.post('/upload', upload.single('document'), async (req, res) => {
     });
 
     await createAuditLog({
+      document_id: documentId,
+      user_id: req.user?.id || null,
+      action: 'document_upload',
+      resource_type: 'document',
+      resource_id: documentId,
+      old_values: null,
+      new_values: {
+        name: metadata.name,
+        original_filename: file.originalname,
+        file_size: file.size,
+        mime_type: file.mimetype,
+        department: metadata.department || '',
+        province: metadata.province || ''
+      },
+      ip_address: req.ip,
+      user_agent: req.get('User-Agent')
+    });
+
+    await createImmutableAuditEntry({
       document_id: documentId,
       user_id: req.user?.id || null,
       action: 'document_upload',

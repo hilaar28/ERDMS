@@ -8,11 +8,13 @@ import { initializeIndexTables } from './models/indexing.js';
 import { initializeAuthTables, initializeCmsTables } from './models/rbac.js';
 import { initializeVersioningTables } from './models/versions.js';
 import { initializeRetentionTables } from './models/retention.js';
+import { initializeImmutableAudit } from './models/auditTrail.js';
 import indexRouter from './routes/index.js';
 import authRouter from './routes/auth.js';
 import cmsRouter from './routes/cms-gateway.js';
 import versionsRouter from './routes/versions.js';
 import retentionRouter from './routes/retention.js';
+import auditTrailRouter from './routes/auditTrail.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -39,6 +41,7 @@ app.use('/api/auth', authRouter);
 app.use('/api/cms', cmsRouter);
 app.use('/api/versioning', versionsRouter);
 app.use('/api/retention', retentionRouter);
+app.use('/api/audit', auditTrailRouter);
 
 // Health check
 app.get('/health', (req, res) => {
@@ -55,6 +58,7 @@ initIngestionSchema()
     await initializeCmsTables();
     await initializeVersioningTables();
     await initializeRetentionTables();
+    await initializeImmutableAudit();
     app.listen(PORT, () => {
       console.log(`ERDMS Server running on port ${PORT}`);
     });
