@@ -154,6 +154,28 @@ export async function initializeAuthTables() {
     }
 
     console.log('Auth tables initialized with default roles and permissions');
+
+    const adminExists = await pool.query('SELECT id FROM users WHERE username = $1', ['admin']);
+    if (adminExists.rowCount === 0) {
+      const adminPassword = await bcrypt.hash('admin123', 10);
+      await pool.query(
+        `INSERT INTO users (username, email, full_name, password_hash, is_active)
+         VALUES ($1, $2, $3, $4, TRUE)
+         ON CONFLICT (username) DO NOTHING
+         RETURNING id`,
+        ['admin', 'admin@erdms.local', 'System Administrator', adminPassword]
+      );
+
+      const adminUser = await pool.query('SELECT id FROM users WHERE username = $1', ['admin']);
+      const adminUserId = adminUser.rows[0].id;
+      const adminRoleId = (await pool.query('SELECT id FROM roles WHERE name = $1', ['Administrator'])).rows[0].id;
+      await pool.query(
+        `INSERT INTO user_roles (user_id, role_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
+        [adminUserId, adminRoleId]
+      );
+
+      console.log('Default admin user created (username: admin, password: admin123)');
+    }
   } catch (err) {
     console.error('Auth table initialization error:', err);
     throw err;
