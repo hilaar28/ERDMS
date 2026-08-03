@@ -15,14 +15,18 @@ export async function initIngestionSchema() {
         bucket_name VARCHAR(255),
         category VARCHAR(100),
         source VARCHAR(50),
-        department VARCHAR(100),
-        province VARCHAR(100),
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+         department VARCHAR(100),
+         province VARCHAR(100),
+         is_deleted BOOLEAN DEFAULT FALSE,
+         deleted_at TIMESTAMP,
+         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
 
-    // Index for fast searches by department/province
+    await pool.query(`ALTER TABLE documents ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN DEFAULT FALSE`);
+    await pool.query(`ALTER TABLE documents ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP`);
+
     await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_docs_dept_prov
       ON documents (department, province);

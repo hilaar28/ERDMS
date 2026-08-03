@@ -6,6 +6,7 @@ import IndexingModule from './IndexingModule';
 import CmsModule from './CmsModule';
 import VersionHistory from './VersionHistory';
 import CollaborationPanel from './CollaborationPanel';
+import RetentionModule from './RetentionModule';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api/documents';
 
@@ -66,6 +67,7 @@ const Dashboard: React.FC = () => {
     { id: 'indexing', label: 'Search & Index', icon: '🔍' },
     { id: 'cms', label: 'Legal CMS', icon: '🏛️' },
     { id: 'auth', label: 'User Management', icon: '👥' },
+    { id: 'retention', label: 'Retention & Disposal', icon: '🗑️' },
   ];
 
   const renderModule = () => {
@@ -129,6 +131,8 @@ const Dashboard: React.FC = () => {
         return <CmsModule API_URL={API_URL} />;
       case 'auth':
         return <AuthModule API_URL={API_URL} />;
+      case 'retention':
+        return <RetentionModule API_URL={API_URL} />;
       default:
         return null;
     }
