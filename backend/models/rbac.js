@@ -268,6 +268,57 @@ export async function removeRoleFromUser(userId, roleId) {
   );
 }
 
+export async function createRole(name, description) {
+  const result = await pool.query(
+    `INSERT INTO roles (name, description) VALUES ($1, $2) RETURNING id, name, description, created_at`,
+    [name, description]
+  );
+  return result.rows[0];
+}
+
+export async function updateRole(roleId, name, description) {
+  const result = await pool.query(
+    `UPDATE roles SET name = $1, description = $2 WHERE id = $3 RETURNING id, name, description, created_at`,
+    [name, description, roleId]
+  );
+  return result.rows[0];
+}
+
+export async function deleteRole(roleId) {
+  const result = await pool.query('DELETE FROM roles WHERE id = $1 RETURNING id', [roleId]);
+  return result.rowCount > 0;
+}
+
+export async function getAllPermissions() {
+  const result = await pool.query('SELECT id, name, description FROM permissions ORDER BY name');
+  return result.rows;
+}
+
+export async function getRolePermissions(roleId) {
+  const result = await pool.query(`
+    SELECT p.id, p.name, p.description
+    FROM permissions p
+    JOIN role_permissions rp ON p.id = rp.permission_id
+    WHERE rp.role_id = $1
+    ORDER BY p.name
+  `, [roleId]);
+  return result.rows;
+}
+
+export async function assignPermissionToRole(roleId, permissionId) {
+  await pool.query(
+    `INSERT INTO role_permissions (role_id, permission_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
+    [roleId, permissionId]
+  );
+}
+
+export async function removePermissionFromRole(roleId, permissionId) {
+  await pool.query(
+    `DELETE FROM role_permissions WHERE role_id = $1 AND permission_id = $2`,
+    [roleId, permissionId]
+  );
+}
+
 export async function createSession(userId, token, expiresAt) {
   await pool.query(
     `INSERT INTO user_sessions (user_id, token, expires_at) VALUES ($1, $2, $3)`,

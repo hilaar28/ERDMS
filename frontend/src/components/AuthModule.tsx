@@ -19,6 +19,12 @@ interface Role {
   description: string;
 }
 
+interface Permission {
+  id: number;
+  name: string;
+  description: string;
+}
+
 const AuthModule: React.FC<AuthModuleProps> = ({ API_URL }) => {
   const [activeTab, setActiveTab] = useState<'users' | 'roles'>('users');
   const [users, setUsers] = useState<User[]>([]);
@@ -29,6 +35,11 @@ const AuthModule: React.FC<AuthModuleProps> = ({ API_URL }) => {
   const authUrl = API_URL.replace('/documents', '/auth');
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
   const [selectedRoleId, setSelectedRoleId] = useState('');
+  const [permissions, setPermissions] = useState<Permission[]>([]);
+  const [roleForm, setRoleForm] = useState({ name: '', description: '' });
+  const [editingRoleId, setEditingRoleId] = useState<number | null>(null);
+  const [expandedRoleId, setExpandedRoleId] = useState<number | null>(null);
+  const [rolePermissionsMap, setRolePermissionsMap] = useState<Record<number, Permission[]>>({});
 
   useEffect(() => {
     fetchUsers();
@@ -75,6 +86,180 @@ const AuthModule: React.FC<AuthModuleProps> = ({ API_URL }) => {
       console.error('Failed to fetch user roles:', error);
     }
   };
+
+  const fetchPermissions = async () => {
+    try {
+      const response = await fetch(`${authUrl}/permissions`, { headers: getAuthHeaders() });
+      if (response.ok) {
+        const data = await response.json();
+        setPermissions(data.data || []);
+      }
+    } catch (error) {
+      console.error('Failed to fetch permissions:', error);
+    }
+  };
+
+  const fetchRolePermissions = async (roleId: number) => {
+    try {
+      const response = await fetch(`${authUrl}/roles/${roleId}/permissions`, { headers: getAuthHeaders() });
+      if (response.ok) {
+        const data = await response.json();
+        setRolePermissionsMap(prev => ({ ...prev, [roleId]: data.data || [] }));
+      }
+    } catch (error) {
+      console.error('Failed to fetch role permissions:', error);
+    }
+  };
+
+  const handleCreateRole = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!roleForm.name.trim()) {
+      setMessage({ type: 'error', text: 'Role name is required' });
+      return;
+    }
+    setLoading(true);
+    setMessage({ type: '', text: '' });
+    try {
+      const response = await fetch(`${authUrl}/roles`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders()
+        },
+        body: JSON.stringify(roleForm)
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setMessage({ type: 'success', text: 'Role created successfully' });
+        setRoleForm({ name: '', description: '' });
+        fetchRoles();
+        fetchPermissions();
+      } else {
+        setMessage({ type: 'error', text: data.error || 'Failed to create role' });
+      }
+    } catch (error) {
+      setMessage({ type: 'error', text: 'Connection error' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpdateRole = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!roleForm.name.trim() || editingRoleId === null) return;
+    setLoading(true);
+    setMessage({ type: '', text: '' });
+    try {
+      const response = await fetch(`${authUrl}/roles/${editingRoleId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders()
+        },
+        body: JSON.stringify(roleForm)
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setMessage({ type: 'success', text: 'Role updated successfully' });
+        setRoleForm({ name: '', description: '' });
+        setEditingRoleId(null);
+        fetchRoles();
+      } else {
+        setMessage({ type: 'error', text: data.error || 'Failed to update role' });
+      }
+    } catch (error) {
+      setMessage({ type: 'error', text: 'Connection error' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteRole = async (roleId: number) => {
+    if (!window.confirm('Delete this role? Users with this role will lose it.')) return;
+    setLoading(true);
+    setMessage({ type: '', text: '' });
+    try {
+      const response = await fetch(`${authUrl}/roles/${roleId}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders()
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setMessage({ type: 'success', text: 'Role deleted successfully' });
+        if (expandedRoleId === roleId) setExpandedRoleId(null);
+        fetchRoles();
+      } else {
+        setMessage({ type: 'error', text: data.error || 'Failed to delete role' });
+      }
+    } catch (error) {
+      setMessage({ type: 'error', text: 'Connection error' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAssignPermission = async (roleId: number, permissionId: number) => {
+    setLoading(true);
+    try {
+      const response = await fetch(`${authUrl}/roles/${roleId}/permissions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders()
+        },
+        body: JSON.stringify({ permissionId })
+      });
+      if (response.ok) {
+        fetchRolePermissions(roleId);
+      }
+    } catch (error) {
+      console.error('Failed to assign permission:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRemovePermission = async (roleId: number, permissionId: number) => {
+    setLoading(true);
+    try {
+      const response = await fetch(`${authUrl}/roles/${roleId}/permissions/${permissionId}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders()
+      });
+      if (response.ok) {
+        fetchRolePermissions(roleId);
+      }
+    } catch (error) {
+      console.error('Failed to remove permission:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEditRole = (role: Role) => {
+    setEditingRoleId(role.id);
+    setRoleForm({ name: role.name, description: role.description || '' });
+  };
+
+  const handleCancelEdit = () => {
+    setEditingRoleId(null);
+    setRoleForm({ name: '', description: '' });
+  };
+
+  const toggleExpandRole = async (roleId: number) => {
+    if (expandedRoleId === roleId) {
+      setExpandedRoleId(null);
+    } else {
+      setExpandedRoleId(roleId);
+      if (!rolePermissionsMap[roleId]) {
+        await fetchRolePermissions(roleId);
+      }
+    }
+  };
+
+  useEffect(() => {
+    fetchPermissions();
+  }, []);
 
   const handleAssignRole = async () => {
     if (!selectedUserId || !selectedRoleId) {
@@ -282,25 +467,164 @@ const AuthModule: React.FC<AuthModuleProps> = ({ API_URL }) => {
 
       {activeTab === 'roles' && (
         <div>
-          <h3 style={{ color: '#333' }}>Role Definitions</h3>
+          <h3 style={{ color: '#333', marginBottom: '1rem' }}>Role Definitions</h3>
+
+          <form onSubmit={editingRoleId ? handleUpdateRole : handleCreateRole} style={{ marginBottom: '1.5rem', padding: '1rem', border: '1px solid #ddd', borderRadius: '8px', backgroundColor: '#fafafa' }}>
+            <h4 style={{ margin: '0 0 0.75rem 0', color: '#555' }}>{editingRoleId ? 'Edit Role' : 'Create New Role'}</h4>
+            <div style={{ display: 'flex', gap: '1rem', marginBottom: '0.75rem' }}>
+              <div style={{ flex: 1 }}>
+                <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.85rem', fontWeight: 500 }}>Role Name</label>
+                <input
+                  type="text"
+                  value={roleForm.name}
+                  onChange={(e) => setRoleForm(prev => ({ ...prev, name: e.target.value }))}
+                  placeholder="Enter role name"
+                  required
+                  style={{ width: '100%', padding: '0.5rem', border: '1px solid #ddd', borderRadius: '4px' }}
+                />
+              </div>
+              <div style={{ flex: 2 }}>
+                <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.85rem', fontWeight: 500 }}>Description</label>
+                <input
+                  type="text"
+                  value={roleForm.description}
+                  onChange={(e) => setRoleForm(prev => ({ ...prev, description: e.target.value }))}
+                  placeholder="Enter role description"
+                  style={{ width: '100%', padding: '0.5rem', border: '1px solid #ddd', borderRadius: '4px' }}
+                />
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button
+                type="submit"
+                disabled={loading}
+                style={{
+                  padding: '0.5rem 1rem',
+                  backgroundColor: editingRoleId ? '#007bff' : '#28a745',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: loading ? 'not-allowed' : 'pointer'
+                }}
+              >
+                {loading ? 'Saving...' : editingRoleId ? 'Update Role' : 'Create Role'}
+              </button>
+              {editingRoleId && (
+                <button
+                  type="button"
+                  onClick={handleCancelEdit}
+                  style={{
+                    padding: '0.5rem 1rem',
+                    backgroundColor: '#6c757d',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Cancel
+                </button>
+              )}
+            </div>
+          </form>
+
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ backgroundColor: '#f5f5f5' }}>
                 <th style={{ padding: '0.75rem', textAlign: 'left' }}>ID</th>
                 <th style={{ padding: '0.75rem', textAlign: 'left' }}>Role Name</th>
                 <th style={{ padding: '0.75rem', textAlign: 'left' }}>Description</th>
+                <th style={{ padding: '0.75rem', textAlign: 'center' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {roles.map(role => (
-                <tr key={role.id} style={{ borderBottom: '1px solid #eee' }}>
-                  <td style={{ padding: '0.75rem' }}>{role.id}</td>
-                  <td style={{ padding: '0.75rem', fontWeight: 500 }}>{role.name}</td>
-                  <td style={{ padding: '0.75rem' }}>{role.description}</td>
-                </tr>
-              ))}
+              {roles.map(role => {
+                const isExpanded = expandedRoleId === role.id;
+                const rolePerms = rolePermissionsMap[role.id] || [];
+                return (
+                  <React.Fragment key={role.id}>
+                    <tr style={{ borderBottom: '1px solid #eee', backgroundColor: isExpanded ? '#f0f7ff' : 'transparent' }}>
+                      <td style={{ padding: '0.75rem' }}>{role.id}</td>
+                      <td style={{ padding: '0.75rem', fontWeight: 500 }}>
+                        <button
+                          onClick={() => toggleExpandRole(role.id)}
+                          style={{ background: 'none', border: 'none', color: '#007bff', cursor: 'pointer', padding: 0, fontWeight: 500, fontSize: 'inherit' }}
+                        >
+                          {role.name} {isExpanded ? '▲' : '▼'}
+                        </button>
+                      </td>
+                      <td style={{ padding: '0.75rem' }}>{role.description}</td>
+                      <td style={{ padding: '0.75rem', textAlign: 'center', whiteSpace: 'nowrap' }}>
+                        <button
+                          onClick={() => handleEditRole(role)}
+                          style={{
+                            padding: '0.3rem 0.6rem',
+                            marginRight: '0.3rem',
+                            backgroundColor: '#007bff',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            fontSize: '0.8rem'
+                          }}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDeleteRole(role.id)}
+                          disabled={loading}
+                          style={{
+                            padding: '0.3rem 0.6rem',
+                            backgroundColor: '#dc3545',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: loading ? 'not-allowed' : 'pointer',
+                            fontSize: '0.8rem'
+                          }}
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                    {isExpanded && (
+                      <tr style={{ borderBottom: '1px solid #ddd', backgroundColor: '#fafafa' }}>
+                        <td colSpan={4} style={{ padding: '1rem' }}>
+                          <h4 style={{ margin: '0 0 0.5rem 0', color: '#333' }}>Permissions</h4>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                            {permissions.map(permission => {
+                              const assigned = rolePerms.some(p => p.id === permission.id);
+                              return (
+                                <button
+                                  key={permission.id}
+                                  onClick={() => assigned ? handleRemovePermission(role.id, permission.id) : handleAssignPermission(role.id, permission.id)}
+                                  style={{
+                                    padding: '0.35rem 0.75rem',
+                                    border: '1px solid #ddd',
+                                    borderRadius: '20px',
+                                    backgroundColor: assigned ? '#007bff' : 'white',
+                                    color: assigned ? 'white' : '#333',
+                                    cursor: 'pointer',
+                                    fontSize: '0.85rem'
+                                  }}
+                                >
+                                  {permission.name}
+                                </button>
+                              );
+                            })}
+                          </div>
+                          <p style={{ margin: 0, fontSize: '0.85rem', color: '#666' }}>
+                            {rolePerms.length === 0 ? 'No permissions assigned.' : `${rolePerms.length} permission(s) assigned.`}
+                          </p>
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
+                );
+              })}
             </tbody>
           </table>
+          {roles.length === 0 && <p style={{ color: '#999', textAlign: 'center', marginTop: '2rem' }}>No roles defined</p>}
         </div>
       )}
     </div>

@@ -16,7 +16,14 @@ import {
   createSession,
   invalidateSession,
   getSession,
-  cleanupSessions
+  cleanupSessions,
+  createRole,
+  updateRole,
+  deleteRole,
+  getAllPermissions,
+  getRolePermissions,
+  assignPermissionToRole,
+  removePermissionFromRole
 } from '../models/rbac.js';
 import { generateToken, requireAuth, requirePermission, requireRole, rotateJwtSecret, getJwtSecret, getPreviousJwtSecret } from '../middleware/auth.js';
 import { createAuditLog } from '../models/versions.js';
@@ -255,6 +262,100 @@ router.delete('/users/:id/roles/:roleId', requireAuth, requirePermission('role:m
   } catch (err) {
     console.error('Remove role error:', err);
     return res.status(500).json({ error: 'Failed to remove role' });
+  }
+});
+
+router.post('/roles', requireAuth, requirePermission('role:manage'), async (req, res) => {
+  const { name, description } = req.body;
+  if (!name || !name.trim()) {
+    return res.status(400).json({ error: 'Role name is required' });
+  }
+  try {
+    const role = await createRole(name.trim(), description || '');
+    return res.status(201).json({ data: role });
+  } catch (err) {
+    console.error('Create role error:', err);
+    if (err.code === '23505') {
+      return res.status(409).json({ error: 'Role name already exists' });
+    }
+    return res.status(500).json({ error: 'Failed to create role' });
+  }
+});
+
+router.put('/roles/:id', requireAuth, requirePermission('role:manage'), async (req, res) => {
+  const { name, description } = req.body;
+  if (!name || !name.trim()) {
+    return res.status(400).json({ error: 'Role name is required' });
+  }
+  try {
+    const role = await updateRole(parseInt(req.params.id), name.trim(), description || '');
+    if (!role) {
+      return res.status(404).json({ error: 'Role not found' });
+    }
+    return res.json({ data: role });
+  } catch (err) {
+    console.error('Update role error:', err);
+    if (err.code === '23505') {
+      return res.status(409).json({ error: 'Role name already exists' });
+    }
+    return res.status(500).json({ error: 'Failed to update role' });
+  }
+});
+
+router.delete('/roles/:id', requireAuth, requirePermission('role:manage'), async (req, res) => {
+  try {
+    const deleted = await deleteRole(parseInt(req.params.id));
+    if (!deleted) {
+      return res.status(404).json({ error: 'Role not found' });
+    }
+    return res.json({ message: 'Role deleted successfully' });
+  } catch (err) {
+    console.error('Delete role error:', err);
+    return res.status(500).json({ error: 'Failed to delete role' });
+  }
+});
+
+router.get('/permissions', requireAuth, requirePermission('role:manage'), async (req, res) => {
+  try {
+    const permissions = await getAllPermissions();
+    return res.json({ data: permissions });
+  } catch (err) {
+    console.error('Get permissions error:', err);
+    return res.status(500).json({ error: 'Failed to fetch permissions' });
+  }
+});
+
+router.get('/roles/:id/permissions', requireAuth, requirePermission('role:manage'), async (req, res) => {
+  try {
+    const rolePermissions = await getRolePermissions(parseInt(req.params.id));
+    return res.json({ data: rolePermissions });
+  } catch (err) {
+    console.error('Get role permissions error:', err);
+    return res.status(500).json({ error: 'Failed to fetch role permissions' });
+  }
+});
+
+router.post('/roles/:id/permissions', requireAuth, requirePermission('role:manage'), async (req, res) => {
+  const { permissionId } = req.body;
+  if (!permissionId) {
+    return res.status(400).json({ error: 'Permission ID is required' });
+  }
+  try {
+    await assignPermissionToRole(parseInt(req.params.id), parseInt(permissionId));
+    return res.json({ message: 'Permission assigned to role' });
+  } catch (err) {
+    console.error('Assign permission error:', err);
+    return res.status(500).json({ error: 'Failed to assign permission' });
+  }
+});
+
+router.delete('/roles/:id/permissions/:permissionId', requireAuth, requirePermission('role:manage'), async (req, res) => {
+  try {
+    await removePermissionFromRole(parseInt(req.params.id), parseInt(req.params.permissionId));
+    return res.json({ message: 'Permission removed from role' });
+  } catch (err) {
+    console.error('Remove permission error:', err);
+    return res.status(500).json({ error: 'Failed to remove permission' });
   }
 });
 
