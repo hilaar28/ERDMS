@@ -228,7 +228,22 @@ const Dashboard: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
         height: '100vh',
         overflowY: 'auto'
       }}>
-        <h2 style={{ padding: '0.5rem', borderBottom: '1px solid #34495e' }}>ERDMS Menu</h2>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.75rem',
+          padding: '0.5rem',
+          borderBottom: '1px solid #34495e',
+          marginBottom: '1rem'
+        }}>
+          <img
+            src="/logo.svg"
+            alt="Logo"
+            style={{ width: '40px', height: '40px', objectFit: 'contain' }}
+            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+          />
+          <h2 style={{ padding: 0, borderBottom: 'none', margin: 0 }}>ERDMS</h2>
+        </div>
         <nav style={{ marginTop: '1rem' }}>
           {menuItems.map(item => (
             <button
