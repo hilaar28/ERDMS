@@ -61,7 +61,15 @@ const LoginPage: React.FC<LoginPageProps> = ({ API_URL, onLoginSuccess }) => {
         borderRadius: '8px',
         boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
       }}>
-        <h1 style={{ textAlign: 'center', color: '#2c3e50', marginBottom: '1.5rem' }}>
+        <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
+          <img
+            src="/logo.svg"
+            alt="Logo"
+            style={{ width: '64px', height: '64px', objectFit: 'contain' }}
+            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+          />
+        </div>
+        <h1 style={{ textAlign: 'center', color: '#2c3e50', marginBottom: '0.5rem' }}>
           ERDMS
         </h1>
         <p style={{ textAlign: 'center', color: '#7f8c8d', marginBottom: '2rem', fontSize: '0.9rem' }}>
