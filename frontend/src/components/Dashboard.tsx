@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import DocumentList from './DocumentList';
 import DocumentRegistration from './DocumentRegistration';
 import AuthModule from './AuthModule';
@@ -22,6 +22,19 @@ const Dashboard: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
   const [selectedDocumentId, setSelectedDocumentId] = useState<number | null>(null);
   const [modalMode, setModalMode] = useState<'history' | 'collab' | null>(null);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [notificationDropdown, setNotificationDropdown] = useState(false);
+  const [recentNotifications, setRecentNotifications] = useState<any[]>([]);
+  const notificationRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (notificationRef.current && !notificationRef.current.contains(e.target as Node)) {
+        setNotificationDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -46,6 +59,37 @@ const Dashboard: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
       }
     } catch (error) {
       console.error('Failed to fetch unread count:', error);
+    }
+  };
+
+  const fetchRecentNotifications = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    try {
+      const response = await fetch(`${API_URL.replace('/documents', '/tasks')}/me/notifications?limit=5&unread=true`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setRecentNotifications(data.data || []);
+      }
+    } catch (error) {
+      console.error('Failed to fetch notifications:', error);
+    }
+  };
+
+  const handleMarkAllRead = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    try {
+      await fetch(`${API_URL.replace('/documents', '/tasks')}/me/notifications/read`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      setRecentNotifications([]);
+      setUnreadCount(0);
+    } catch (error) {
+      console.error('Failed to mark all read:', error);
     }
   };
 
@@ -244,6 +288,138 @@ const Dashboard: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
         width: '100%',
         maxWidth: '1200px'
       }}>
+        <div style={{
+          position: 'fixed',
+          top: '1rem',
+          right: '1rem',
+          zIndex: '1000'
+        }}>
+          <div ref={notificationRef} style={{ position: 'relative', display: 'inline-block' }}>
+            <button
+              onClick={() => { setNotificationDropdown(!notificationDropdown); fetchRecentNotifications(); }}
+              style={{
+                position: 'relative',
+                padding: '0.5rem 0.75rem',
+                backgroundColor: '#2c3e50',
+                color: 'white',
+                border: 'none',
+                borderRadius: '50px',
+                cursor: 'pointer',
+                fontSize: '1.1rem'
+              }}
+              title="Notifications"
+            >
+              🔔
+              {unreadCount > 0 && (
+                <span style={{
+                  position: 'absolute',
+                  top: '-5px',
+                  right: '-5px',
+                  backgroundColor: '#e74c3c',
+                  color: 'white',
+                  borderRadius: '50%',
+                  padding: '0.1px 6px',
+                  fontSize: '0.7rem',
+                  minWidth: '18px',
+                  height: '18px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              )}
+            </button>
+
+            {notificationDropdown && (
+              <div style={{
+                position: 'absolute',
+                top: '100%',
+                right: '0',
+                width: '320px',
+                maxHeight: '400px',
+                backgroundColor: 'white',
+                border: '1px solid #ddd',
+                borderRadius: '8px',
+                boxShadow: '0 2px 10px rgba(0,0,0,0.15)',
+                zIndex: '1001',
+                overflow: 'hidden'
+              }}>
+                <div style={{
+                  padding: '0.5rem 1rem',
+                  borderBottom: '1px solid #eee',
+                  backgroundColor: '#f5f5f5',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
+                }}>
+                  <h3 style={{ margin: 0, fontSize: '0.9rem', color: '#333' }}>Notifications</h3>
+                  {unreadCount > 0 && (
+                    <button
+                      onClick={handleMarkAllRead}
+                      style={{
+                        padding: '0.2rem 0.5rem',
+                        backgroundColor: 'transparent',
+                        color: '#007bff',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        fontSize: '0.8rem'
+                      }}
+                    >
+                      Mark All Read
+                    </button>
+                  )}
+                </div>
+
+                <div style={{ maxHeight: '350px', overflowY: 'auto' }}>
+                  {recentNotifications.length > 0 ? (
+                    recentNotifications.map(notif => (
+                      <div
+                        key={notif.id}
+                        style={{
+                          padding: '0.75rem',
+                          borderBottom: '1px solid #eee',
+                          backgroundColor: notif.is_read ? 'white' : '#e3f2fd'
+                        }}
+                      >
+                        <div style={{ fontSize: '0.8rem', color: '#555', marginBottom: '0.25rem' }}>
+                          {notif.message}
+                        </div>
+                        <div style={{ fontSize: '0.7rem', color: '#999' }}>
+                          {new Date(notif.created_at).toLocaleTimeString()}
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div style={{ padding: '1rem', textAlign: 'center', color: '#999', fontSize: '0.85rem' }}>
+                      No new notifications
+                    </div>
+                  )}
+                </div>
+
+                {recentNotifications.length > 0 && (
+                  <div style={{ padding: '0.5rem', textAlign: 'center', borderTop: '1px solid #eee' }}>
+                    <button
+                      onClick={() => { setNotificationDropdown(false); setActiveModule('notifications'); }}
+                      style={{
+                        padding: '0.3rem 0.75rem',
+                        backgroundColor: 'transparent',
+                        color: '#007bff',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        fontSize: '0.8rem'
+                      }}
+                    >
+                      View All
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
         {message.text && (
           <div style={{
             padding: '1rem',
