@@ -18,7 +18,8 @@ import {
   getSession,
   cleanupSessions
 } from '../models/rbac.js';
-import { generateToken, requireAuth, requirePermission, requireRole, JWT_SECRET } from '../middleware/auth.js';
+import { generateToken, requireAuth, requirePermission, requireRole, rotateJwtSecret, getJwtSecret, getPreviousJwtSecret } from '../middleware/auth.js';
+import { createAuditLog } from '../models/versions.js';
 
 const router = express.Router();
 
@@ -106,6 +107,49 @@ router.post('/logout', requireAuth, async (req, res) => {
   } catch (err) {
     console.error('Logout error:', err);
     return res.status(500).json({ error: 'Logout failed' });
+  }
+});
+
+router.post('/jwt/rotate', requireAuth, requireRole('Administrator'), async (req, res) => {
+  try {
+    const { newSecret } = req.body;
+
+    if (!newSecret || newSecret.length < 32) {
+      return res.status(400).json({ error: 'New JWT secret must be at least 32 characters' });
+    }
+
+    rotateJwtSecret(newSecret);
+
+    await createAuditLog({
+      document_id: null,
+      user_id: req.user.id,
+      action: 'jwt_secret_rotated',
+      resource_type: 'system',
+      resource_id: null,
+      old_values: { loaded_at: getPreviousJwtSecret() ? 'previous_secret_available' : 'no_previous' },
+      new_values: { loaded_at: getJwtSecret() ? 'new_secret_active' : 'error' },
+      ip_address: req.ip,
+      user_agent: req.get('User-Agent')
+    });
+
+    return res.json({ message: 'JWT secret rotated successfully', rotated_at: new Date().toISOString() });
+  } catch (err) {
+    console.error('JWT rotation error:', err);
+    return res.status(500).json({ error: 'JWT rotation failed' });
+  }
+});
+
+router.get('/jwt/status', requireAuth, requireRole('Administrator'), async (req, res) => {
+  try {
+    return res.json({
+      initialized: !!getJwtSecret(),
+      loaded_at: getJwtSecret() ? 'available' : 'not_loaded',
+      has_previous: !!getPreviousJwtSecret(),
+      rotation_supported: true
+    });
+  } catch (err) {
+    console.error('JWT status error:', err);
+    return res.status(500).json({ error: 'Failed to get JWT status' });
   }
 });
 

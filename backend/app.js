@@ -10,6 +10,7 @@ import { initializeVersioningTables } from './models/versions.js';
 import { initializeRetentionTables } from './models/retention.js';
 import { initializeImmutableAudit } from './models/auditTrail.js';
 import { initializeTaskTables } from './models/tasks.js';
+import { initializeJwtSecret } from './middleware/auth.js';
 import indexRouter from './routes/index.js';
 import authRouter from './routes/auth.js';
 import cmsRouter from './routes/cms-gateway.js';
@@ -63,11 +64,12 @@ initIngestionSchema()
     await initializeRetentionTables();
     await initializeImmutableAudit();
     await initializeTaskTables();
+    await initializeJwtSecret();
     app.listen(PORT, () => {
       console.log(`ERDMS Server running on port ${PORT}`);
     });
   })
   .catch((err) => {
-    console.error('Failed to initialize database schema, exiting:', err);
+    console.error('Failed to initialize server, exiting:', err);
     process.exit(1);
   });
