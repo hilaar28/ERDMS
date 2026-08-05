@@ -15,15 +15,17 @@ export async function initIngestionSchema() {
         bucket_name VARCHAR(255),
         category VARCHAR(100),
         source VARCHAR(50),
-         department VARCHAR(100),
-         province VARCHAR(100),
-         is_deleted BOOLEAN DEFAULT FALSE,
-         deleted_at TIMESTAMP,
-         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        department VARCHAR(100),
+        province VARCHAR(100),
+        created_by INTEGER REFERENCES users(id),
+        is_deleted BOOLEAN DEFAULT FALSE,
+        deleted_at TIMESTAMP,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
 
+    await pool.query(`ALTER TABLE documents ADD COLUMN IF NOT EXISTS created_by INTEGER REFERENCES users(id)`);
     await pool.query(`ALTER TABLE documents ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN DEFAULT FALSE`);
     await pool.query(`ALTER TABLE documents ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP`);
 

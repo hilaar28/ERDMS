@@ -1,6 +1,7 @@
 import express from 'express';
 import pool from '../db.js';
-import { requireAuth } from '../middleware/auth.js';
+import { requireAuth, requirePermission } from '../middleware/auth.js';
+import { requireDocumentAccess, requireDocumentWriteAccess } from '../middleware/authorization.js';
 import {
   getVersions,
   getVersion,
@@ -17,7 +18,7 @@ import {
 
 const router = express.Router();
 
-router.get('/documents/:id/versions', requireAuth, async (req, res) => {
+router.get('/documents/:id/versions', requireAuth, requireDocumentAccess, async (req, res) => {
   try {
     const docId = parseInt(req.params.id);
     const docCheck = await pool.query('SELECT id FROM documents WHERE id = $1', [docId]);
@@ -47,7 +48,7 @@ router.get('/documents/:id/versions/:versionNumber', requireAuth, async (req, re
   }
 });
 
-router.post('/documents/:id/versions/:versionNumber/restore', requireAuth, async (req, res) => {
+router.post('/documents/:id/versions/:versionNumber/restore', requireAuth, requireDocumentWriteAccess, async (req, res) => {
   try {
     const docId = parseInt(req.params.id);
     const versionNum = parseInt(req.params.versionNumber);
@@ -69,7 +70,7 @@ router.post('/documents/:id/versions/:versionNumber/restore', requireAuth, async
   }
 });
 
-router.get('/documents/:id/audit-log', requireAuth, async (req, res) => {
+router.get('/documents/:id/audit-log', requireAuth, requireDocumentAccess, async (req, res) => {
   try {
     const docId = parseInt(req.params.id);
     const limit = parseInt(req.query.limit) || 50;
@@ -115,7 +116,7 @@ router.get('/documents/:id/workflow', requireAuth, async (req, res) => {
   }
 });
 
-router.put('/documents/:id/workflow', requireAuth, async (req, res) => {
+router.put('/documents/:id/workflow', requireAuth, requireDocumentWriteAccess, async (req, res) => {
   try {
     const docId = parseInt(req.params.id);
     const { status, notes } = req.body;
@@ -142,7 +143,7 @@ router.put('/documents/:id/workflow', requireAuth, async (req, res) => {
   }
 });
 
-router.get('/documents/:id/comments', requireAuth, async (req, res) => {
+router.get('/documents/:id/comments', requireAuth, requireDocumentAccess, async (req, res) => {
   try {
     const docId = parseInt(req.params.id);
     const comments = await getComments(docId);
@@ -153,7 +154,7 @@ router.get('/documents/:id/comments', requireAuth, async (req, res) => {
   }
 });
 
-router.post('/documents/:id/comments', requireAuth, async (req, res) => {
+router.post('/documents/:id/comments', requireAuth, requireDocumentAccess, async (req, res) => {
   try {
     const docId = parseInt(req.params.id);
     const userId = req.user.id;

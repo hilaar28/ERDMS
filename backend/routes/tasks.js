@@ -20,6 +20,7 @@ import {
   createNotification
 } from '../models/tasks.js';
 import { createAuditLog } from '../models/versions.js';
+import { requireTaskAccess, requireTaskAssignment } from '../middleware/authorization.js';
 
 const router = express.Router();
 
@@ -64,7 +65,7 @@ router.post('/tasks', requirePermission('document:create'), async (req, res) => 
   }
 });
 
-router.get('/tasks', requirePermission('document:search'), async (req, res) => {
+router.get('/tasks', requireAuth, requirePermission('document:search'), async (req, res) => {
   try {
     const filters = {};
     if (req.query.assignedTo) filters.assignedTo = parseInt(req.query.assignedTo);
@@ -82,7 +83,7 @@ router.get('/tasks', requirePermission('document:search'), async (req, res) => {
   }
 });
 
-router.get('/tasks/:id', requirePermission('document:search'), async (req, res) => {
+router.get('/tasks/:id', requireAuth, requireTaskAccess, async (req, res) => {
   try {
     const task = await getTaskById(parseInt(req.params.id));
     if (!task) {
@@ -96,7 +97,7 @@ router.get('/tasks/:id', requirePermission('document:search'), async (req, res) 
   }
 });
 
-router.put('/tasks/:id', requirePermission('document:update'), async (req, res) => {
+router.put('/tasks/:id', requireAuth, requireTaskAccess, async (req, res) => {
   try {
     const task = await updateTask(parseInt(req.params.id), req.body);
     if (!task) {
@@ -109,7 +110,7 @@ router.put('/tasks/:id', requirePermission('document:update'), async (req, res) 
   }
 });
 
-router.delete('/tasks/:id', requirePermission('document:delete'), async (req, res) => {
+router.delete('/tasks/:id', requireAuth, requireTaskAccess, async (req, res) => {
   try {
     const success = await deleteTask(parseInt(req.params.id));
     if (!success) {
@@ -122,7 +123,7 @@ router.delete('/tasks/:id', requirePermission('document:delete'), async (req, re
   }
 });
 
-router.post('/tasks/:id/status', requireAuth, async (req, res) => {
+router.post('/tasks/:id/status', requireAuth, requireTaskAssignment, async (req, res) => {
   try {
     const { status } = req.body;
     const task = await updateTaskStatus(parseInt(req.params.id), status, req.user.id);
@@ -136,7 +137,7 @@ router.post('/tasks/:id/status', requireAuth, async (req, res) => {
   }
 });
 
-router.post('/tasks/:id/assign', requirePermission('document:update'), async (req, res) => {
+router.post('/tasks/:id/assign', requireAuth, requireTaskAccess, async (req, res) => {
   try {
     const { userId, roleInTask } = req.body;
     if (!userId) {
@@ -221,7 +222,7 @@ router.post('/me/notifications/:id/read', requireAuth, async (req, res) => {
   }
 });
 
-router.post('/tasks/:id/comments', requireAuth, async (req, res) => {
+router.post('/tasks/:id/comments', requireAuth, requireTaskAssignment, async (req, res) => {
   try {
     const { comment } = req.body;
     if (!comment || !comment.trim()) {

@@ -5,6 +5,8 @@ import pool from '../db.js';
 import { validateFile } from '../utils/fileValidation.js';
 import { createVersion, createAuditLog } from '../models/versions.js';
 import { createImmutableAuditEntry } from '../models/auditTrail.js';
+import { requireAuth, requirePermission } from '../middleware/auth.js';
+import { requireDocumentAccess, requireDocumentWriteAccess, requireDocumentOwnership } from '../middleware/authorization.js';
 
 const router = express.Router();
 
@@ -42,7 +44,7 @@ router.post('/upload', upload.single('document'), async (req, res) => {
     }
 
     const result = await pool.query(
-      'INSERT INTO documents (name, original_filename, stored_filename, file_path, file_size, mime_type, bucket_name, department, province, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP) RETURNING id',
+      'INSERT INTO documents (name, original_filename, stored_filename, file_path, file_size, mime_type, bucket_name, department, province, created_by, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP) RETURNING id',
       [
         metadata.name,
         file.originalname,
@@ -52,7 +54,8 @@ router.post('/upload', upload.single('document'), async (req, res) => {
         file.mimetype,
         process.env.MINIO_BUCKET || 'erkms-bucks',
         metadata.department || '',
-        metadata.province || ''
+        metadata.province || '',
+        req.user?.id || null
       ]
     );
 
@@ -133,7 +136,7 @@ router.post('/upload', upload.single('document'), async (req, res) => {
 });
 
 // Get document with version history and metadata
-router.get('/documents/:id', async (req, res) => {
+router.get('/documents/:id', requireAuth, requireDocumentAccess, async (req, res) => {
   try {
     const docId = parseInt(req.params.id);
     const result = await pool.query(
@@ -170,7 +173,7 @@ router.get('/documents', async (req, res) => {
 });
 
 // Simple text-only document registration (for testing)
-router.post('/', async (req, res) => {
+router.post('/', requireAuth, requirePermission('document:register'), async (req, res) => {
   try {
     const { documentName } = req.body;
 
