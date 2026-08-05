@@ -127,16 +127,13 @@ export async function createTask({
          VALUES ($1, $2, $3)`,
         [task.id, assignedTo, assignedBy]
       );
-    }
 
-    await createNotification({
-      userId: assignedTo,
-      taskId: task.id,
-      documentId,
-      message: `New task assigned: ${title}`,
-      type: 'task_assignment',
-      metadata: { priority, dueDate }
-    });
+      await client.query(
+        `INSERT INTO notifications (user_id, task_id, document_id, message, notification_type, metadata)
+         VALUES ($1, $2, $3, $4, $5, $6)`,
+        [assignedTo, task.id, documentId, `New task assigned: ${title}`, 'task_assignment', JSON.stringify({ priority, dueDate })]
+      );
+    }
 
     await client.query('COMMIT');
     return task;
