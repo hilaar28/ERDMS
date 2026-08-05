@@ -10,6 +10,7 @@ import RetentionModule from './RetentionModule';
 import AuditTrail from './AuditTrail';
 import TaskAssignment from './TaskAssignment';
 import NotificationCenter from './NotificationCenter';
+import DocumentViewer from './DocumentViewer';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api/documents';
 
@@ -24,6 +25,7 @@ const Dashboard: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [notificationDropdown, setNotificationDropdown] = useState(false);
   const [recentNotifications, setRecentNotifications] = useState<any[]>([]);
+  const [viewingDocumentId, setViewingDocumentId] = useState<number | null>(null);
   const notificationRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -377,10 +379,17 @@ const Dashboard: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
                     recentNotifications.map(notif => (
                       <div
                         key={notif.id}
+                        onClick={() => {
+                          if (notif.document_id) {
+                            setViewingDocumentId(notif.document_id);
+                            setNotificationDropdown(false);
+                          }
+                        }}
                         style={{
                           padding: '0.75rem',
                           borderBottom: '1px solid #eee',
-                          backgroundColor: notif.is_read ? 'white' : '#e3f2fd'
+                          backgroundColor: notif.is_read ? 'white' : '#e3f2fd',
+                          cursor: notif.document_id ? 'pointer' : 'default'
                         }}
                       >
                         <div style={{ fontSize: '0.8rem', color: '#555', marginBottom: '0.25rem' }}>
@@ -504,6 +513,37 @@ const Dashboard: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
                   Close
                 </button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {viewingDocumentId && (
+          <div style={{
+            position: 'fixed',
+            top: '0',
+            left: '0',
+            width: '100vw',
+            height: '100vh',
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: '9999'
+          }}>
+            <div style={{
+              backgroundColor: 'white',
+              borderRadius: '8px',
+              width: '90vw',
+              maxWidth: '900px',
+              maxHeight: '85vh',
+              overflow: 'auto',
+              margin: '1rem'
+            }}>
+              <DocumentViewer
+                documentId={viewingDocumentId}
+                API_URL={API_URL}
+                onClose={() => setViewingDocumentId(null)}
+              />
             </div>
           </div>
         )}
