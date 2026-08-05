@@ -57,9 +57,25 @@ const TaskAssignment: React.FC<TaskAssignmentProps> = ({ API_URL }) => {
     roleInTask: ''
   });
 
+  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
+
   const getAuthHeaders = () => {
     const token = localStorage.getItem('token');
     return token ? { 'Authorization': `Bearer ${token}` } : {};
+  };
+
+  const getCurrentUser = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    try {
+      const response = await fetch(`${authUrl}/me`, { headers: { 'Authorization': `Bearer ${token}` } });
+      if (response.ok) {
+        const data = await response.json();
+        setCurrentUserId(data.user.id);
+      }
+    } catch (error) {
+      console.error('Failed to get current user:', error);
+    }
   };
 
   const fetchTasks = async () => {
@@ -114,6 +130,7 @@ const TaskAssignment: React.FC<TaskAssignmentProps> = ({ API_URL }) => {
     fetchTasks();
     fetchUsers();
     fetchDocuments();
+    getCurrentUser();
   }, []);
 
   const handleCreateTask = async (e: React.FormEvent) => {
@@ -443,77 +460,109 @@ const TaskAssignment: React.FC<TaskAssignmentProps> = ({ API_URL }) => {
         </div>
       )}
 
-      <h3 style={{ color: '#333' }}>Task List</h3>
-      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-        <thead>
-          <tr style={{ backgroundColor: '#f5f5f5' }}>
-            <th style={{ padding: '0.5rem', textAlign: 'left' }}>ID</th>
-            <th style={{ padding: '0.5rem', textAlign: 'left' }}>Title</th>
-            <th style={{ padding: '0.5rem', textAlign: 'left' }}>Document</th>
-            <th style={{ padding: '0.5rem', textAlign: 'left' }}>Assigned To</th>
-            <th style={{ padding: '0.5rem', textAlign: 'left' }}>Priority</th>
-            <th style={{ padding: '0.5rem', textAlign: 'left' }}>Due Date</th>
-            <th style={{ padding: '0.5rem', textAlign: 'left' }}>Status</th>
-            <th style={{ padding: '0.5rem', textAlign: 'center' }}>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {tasks.map(task => (
-            <tr key={task.id} style={{ borderBottom: '1px solid #eee' }}>
-              <td style={{ padding: '0.5rem' }}>{task.id}</td>
-              <td style={{ padding: '0.5rem' }}>{task.title}</td>
-              <td style={{ padding: '0.5rem' }}>{task.document_name || 'N/A'}</td>
-              <td style={{ padding: '0.5rem' }}>{task.assignee_full_name || task.assignee_username || 'Unassigned'}</td>
-              <td style={{ padding: '0.5rem' }}>
-                <span style={{
-                  padding: '0.15rem 0.5rem',
-                  backgroundColor: `${priorityColors[task.priority] || '#007bff'}20`,
-                  color: priorityColors[task.priority] || '#007bff',
-                  borderRadius: '10px',
-                  fontSize: '0.8rem'
-                }}>
-                  {task.priority}
+      <h3 style={{ color: '#333', marginBottom: '1rem' }}>My Tasks</h3>
+
+      {currentUserId && (() => {
+        const myTasks = tasks.filter(t => t.assigned_to === currentUserId || t.assigned_by === currentUserId);
+        const pending = myTasks.filter(t => t.status === 'pending');
+        const inProgress = myTasks.filter(t => t.status === 'in_progress');
+        const completed = myTasks.filter(t => t.status === 'completed');
+
+        const renderTaskCard = (task: Task) => (
+          <div key={task.id} style={{
+            padding: '0.75rem',
+            backgroundColor: 'white',
+            borderRadius: '6px',
+            border: '1px solid #eee',
+            marginBottom: '0.5rem'
+          }}>
+            <div style={{ fontWeight: 500, marginBottom: '0.25rem' }}>{task.title}</div>
+            <div style={{ fontSize: '0.8rem', color: '#666', marginBottom: '0.25rem' }}>
+              {task.document_name || 'No document'}
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{
+                padding: '0.15rem 0.5rem',
+                backgroundColor: `${priorityColors[task.priority] || '#007bff'}20`,
+                color: priorityColors[task.priority] || '#007bff',
+                borderRadius: '10px',
+                fontSize: '0.75rem'
+              }}>
+                {task.priority}
+              </span>
+              {task.due_date && (
+                <span style={{ fontSize: '0.75rem', color: '#999' }}>
+                  {new Date(task.due_date).toLocaleDateString()}
                 </span>
-              </td>
-              <td style={{ padding: '0.5rem' }}>{task.due_date ? new Date(task.due_date).toLocaleDateString() : '-'}</td>
-              <td style={{ padding: '0.5rem' }}>
-                <select
-                  value={task.status}
-                  onChange={(e) => handleStatusChange(task.id, e.target.value)}
-                  style={{
-                    padding: '0.2rem 0.5rem',
-                    border: '1px solid #ddd',
-                    borderRadius: '4px',
-                    backgroundColor: 'white',
-                    fontSize: '0.85rem'
-                  }}
-                >
-                  {statusOptions.map(opt => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
-              </td>
-              <td style={{ padding: '0.5rem', textAlign: 'center' }}>
-                <button
-                  onClick={() => handleDeleteTask(task.id)}
-                  style={{
-                    padding: '0.2rem 0.5rem',
-                    backgroundColor: '#dc3545',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    fontSize: '0.8rem'
-                  }}
-                >
-                  Delete
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      {tasks.length === 0 && <p style={{ color: '#999', textAlign: 'center', marginTop: '2rem' }}>No tasks found</p>}
+              )}
+            </div>
+            <div style={{ marginTop: '0.5rem', display: 'flex', gap: '0.3rem' }}>
+              <select
+                value={task.status}
+                onChange={(e) => handleStatusChange(task.id, e.target.value)}
+                style={{
+                  padding: '0.2rem 0.5rem',
+                  border: '1px solid #ddd',
+                  borderRadius: '4px',
+                  backgroundColor: 'white',
+                  fontSize: '0.8rem'
+                }}
+              >
+                {statusOptions.map(opt => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+              <button
+                onClick={() => handleDeleteTask(task.id)}
+                style={{
+                  padding: '0.2rem 0.5rem',
+                  backgroundColor: '#dc3545',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '0.75rem'
+                }}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        );
+
+        return (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
+            <div style={{ backgroundColor: '#f8f9fa', padding: '1rem', borderRadius: '8px' }}>
+              <h4 style={{ margin: '0 0 0.75rem 0', color: '#666', fontSize: '0.9rem' }}>
+                Pending ({pending.length})
+              </h4>
+              {pending.length > 0 ? pending.map(renderTaskCard) : (
+                <p style={{ color: '#999', fontSize: '0.85rem', textAlign: 'center', padding: '1rem' }}>No pending tasks</p>
+              )}
+            </div>
+            <div style={{ backgroundColor: '#f8f9fa', padding: '1rem', borderRadius: '8px' }}>
+              <h4 style={{ margin: '0 0 0.75rem 0', color: '#007bff', fontSize: '0.9rem' }}>
+                In Progress ({inProgress.length})
+              </h4>
+              {inProgress.length > 0 ? inProgress.map(renderTaskCard) : (
+                <p style={{ color: '#999', fontSize: '0.85rem', textAlign: 'center', padding: '1rem' }}>No tasks in progress</p>
+              )}
+            </div>
+            <div style={{ backgroundColor: '#f8f9fa', padding: '1rem', borderRadius: '8px' }}>
+              <h4 style={{ margin: '0 0 0.75rem 0', color: '#28a745', fontSize: '0.9rem' }}>
+                Completed ({completed.length})
+              </h4>
+              {completed.length > 0 ? completed.map(renderTaskCard) : (
+                <p style={{ color: '#999', fontSize: '0.85rem', textAlign: 'center', padding: '1rem' }}>No completed tasks</p>
+              )}
+            </div>
+          </div>
+        );
+      })()}
+
+      {(!currentUserId || tasks.length === 0) && (
+        <p style={{ color: '#999', textAlign: 'center', marginTop: '2rem' }}>No tasks found</p>
+      )}
     </div>
   );
 };
