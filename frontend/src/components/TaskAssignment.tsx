@@ -496,7 +496,7 @@ const TaskAssignment: React.FC<TaskAssignmentProps> = ({ API_URL }) => {
                 </span>
               )}
             </div>
-            <div style={{ marginTop: '0.5rem', display: 'flex', gap: '0.3rem' }}>
+            <div style={{ marginTop: '0.5rem' }}>
               <select
                 value={task.status}
                 onChange={(e) => handleStatusChange(task.id, e.target.value)}
@@ -512,20 +512,6 @@ const TaskAssignment: React.FC<TaskAssignmentProps> = ({ API_URL }) => {
                   <option key={opt.value} value={opt.value}>{opt.label}</option>
                 ))}
               </select>
-              <button
-                onClick={() => handleDeleteTask(task.id)}
-                style={{
-                  padding: '0.2rem 0.5rem',
-                  backgroundColor: '#dc3545',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontSize: '0.75rem'
-                }}
-              >
-                Delete
-              </button>
             </div>
           </div>
         );

@@ -111,16 +111,7 @@ router.put('/tasks/:id', requireAuth, requireTaskAccess, async (req, res) => {
 });
 
 router.delete('/tasks/:id', requireAuth, requireTaskAccess, async (req, res) => {
-  try {
-    const success = await deleteTask(parseInt(req.params.id));
-    if (!success) {
-      return res.status(404).json({ error: 'Task not found' });
-    }
-    res.json({ message: 'Task deleted' });
-  } catch (error) {
-    console.error('Error deleting task:', error);
-    res.status(500).json({ error: 'Failed to delete task' });
-  }
+  return res.status(403).json({ error: 'Task deletion is not allowed' });
 });
 
 router.post('/tasks/:id/status', requireAuth, requireTaskAssignment, async (req, res) => {
