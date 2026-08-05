@@ -237,7 +237,7 @@ const Dashboard: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
           marginBottom: '1rem'
         }}>
           <img
-            src="/logo.svg"
+            src="/logo.jpg"
             alt="Logo"
             style={{ width: '40px', height: '40px', objectFit: 'contain' }}
             onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
