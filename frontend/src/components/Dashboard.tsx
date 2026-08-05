@@ -8,6 +8,8 @@ import VersionHistory from './VersionHistory';
 import CollaborationPanel from './CollaborationPanel';
 import RetentionModule from './RetentionModule';
 import AuditTrail from './AuditTrail';
+import TaskAssignment from './TaskAssignment';
+import NotificationCenter from './NotificationCenter';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api/documents';
 
@@ -19,13 +21,33 @@ const Dashboard: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
   const [user, setUser] = useState<any>(null);
   const [selectedDocumentId, setSelectedDocumentId] = useState<number | null>(null);
   const [modalMode, setModalMode] = useState<'history' | 'collab' | null>(null);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
       setUser({ token });
     }
+    fetchUnreadCount();
+    const interval = setInterval(fetchUnreadCount, 30000);
+    return () => clearInterval(interval);
   }, []);
+
+  const fetchUnreadCount = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    try {
+      const response = await fetch(`${API_URL.replace('/documents', '/tasks')}/me/notifications/unread/count`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setUnreadCount(data.count || 0);
+      }
+    } catch (error) {
+      console.error('Failed to fetch unread count:', error);
+    }
+  };
 
   useEffect(() => {
     if (activeModule === 'documents') {
@@ -71,6 +93,8 @@ const Dashboard: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
     { id: 'auth', label: 'User Management', icon: '👥' },
     { id: 'retention', label: 'Retention & Disposal', icon: '🗑️' },
     { id: 'audit', label: 'Immutable Audit Trail', icon: '🔐' },
+    { id: 'notifications', label: 'Notifications', icon: '🔔' },
+    { id: 'tasks', label: 'Task Management', icon: '📋' },
   ];
 
   const renderModule = () => {
@@ -138,6 +162,10 @@ const Dashboard: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
         return <RetentionModule API_URL={API_URL} />;
       case 'audit':
         return <AuditTrail API_URL={API_URL} />;
+      case 'notifications':
+        return <NotificationCenter API_URL={API_URL} />;
+      case 'tasks':
+        return <TaskAssignment API_URL={API_URL} />;
       default:
         return null;
     }
@@ -175,6 +203,18 @@ const Dashboard: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
               }}
             >
               {item.icon} {item.label}
+              {item.id === 'notifications' && unreadCount > 0 && (
+                <span style={{
+                  backgroundColor: '#e74c3c',
+                  color: 'white',
+                  borderRadius: '50%',
+                  padding: '0.15rem 0.5rem',
+                  fontSize: '0.75rem',
+                  marginLeft: '0.5rem'
+                }}>
+                  {unreadCount}
+                </span>
+              )}
             </button>
           ))}
         </nav>
