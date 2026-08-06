@@ -12,9 +12,10 @@ interface Document {
 interface DocumentListProps {
   documents: Document[];
   onAction?: (documentId: number, action: 'history' | 'collab') => void;
+  showType?: boolean;
 }
 
-const DocumentList: React.FC<DocumentListProps> = ({ documents, onAction }) => {
+const DocumentList: React.FC<DocumentListProps> = ({ documents, onAction, showType = true }) => {
   return (
     <div>
       <h2>Registered Documents</h2>
@@ -25,7 +26,9 @@ const DocumentList: React.FC<DocumentListProps> = ({ documents, onAction }) => {
             <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '2px solid #ddd' }}>Name</th>
             <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '2px solid #ddd' }}>Original File</th>
             <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '2px solid #ddd' }}>Size</th>
-            <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '2px solid #ddd' }}>Type</th>
+            {showType && (
+              <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '2px solid #ddd' }}>Type</th>
+            )}
             <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '2px solid #ddd' }}>Created</th>
             {onAction && (
               <th style={{ padding: '0.75rem', textAlign: 'center', borderBottom: '2px solid #ddd' }}>Actions</th>
@@ -39,7 +42,9 @@ const DocumentList: React.FC<DocumentListProps> = ({ documents, onAction }) => {
               <td style={{ padding: '0.75rem', fontWeight: 500 }}>{doc.name}</td>
               <td style={{ padding: '0.75rem' }}>{doc.original_filename || 'N/A'}</td>
               <td style={{ padding: '0.75rem' }}>{doc.file_size ? `${(doc.file_size / 1024).toFixed(1)} KB` : 'N/A'}</td>
-              <td style={{ padding: '0.75rem' }}>{doc.mime_type || 'N/A'}</td>
+              {showType && (
+                <td style={{ padding: '0.75rem' }}>{doc.mime_type || 'N/A'}</td>
+              )}
               <td style={{ padding: '0.75rem' }}>{new Date(doc.created_at).toLocaleString()}</td>
               {onAction && (
                 <td style={{ padding: '0.75rem', textAlign: 'center' }}>
