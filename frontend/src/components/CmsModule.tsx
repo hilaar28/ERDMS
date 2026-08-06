@@ -112,8 +112,6 @@ const CmsModule: React.FC<CmsModuleProps> = ({ API_URL }) => {
 
   return (
     <div>
-      <h1 style={{ color: '#333' }}>Legal CMS Integration</h1>
-
       <div style={{ marginBottom: '2rem' }}>
         <h3 style={{ color: '#333' }}>Get Case</h3>
         <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>

@@ -186,8 +186,6 @@ const RetentionModule: React.FC<RetentionModuleProps> = ({ API_URL }) => {
 
   return (
     <div>
-      <h1 style={{ color: '#333' }}>Retention &amp; Disposal</h1>
-
       <div style={{ marginBottom: '1.5rem' }}>
         <div style={{ display: 'flex', gap: '0.5rem', borderBottom: '2px solid #ddd' }}>
           {tabs.map(tab => (

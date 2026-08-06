@@ -133,9 +133,10 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ API_URL }) => {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
         <div>
-          <h2 style={{ color: '#333', margin: 0 }}>Notifications</h2>
-          {unreadCount > 0 && (
-            <span style={{ color: '#fd7e14', fontSize: '0.9rem' }}>{unreadCount} unread</span>
+          {unreadCount > 0 ? (
+            <span style={{ color: '#fd7e14', fontSize: '1.1rem', fontWeight: 500 }}>{unreadCount} unread</span>
+          ) : (
+            <span style={{ color: '#666', fontSize: '0.9rem' }}>All caught up!</span>
           )}
         </div>
         <div style={{ display: 'flex', gap: '0.5rem' }}>

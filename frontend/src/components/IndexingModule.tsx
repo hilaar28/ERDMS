@@ -87,8 +87,6 @@ const IndexingModule: React.FC<IndexingModuleProps> = ({ API_URL }) => {
 
   return (
     <div>
-      <h1 style={{ color: '#333' }}>Search & Indexing</h1>
-
       <div style={{ marginBottom: '2rem' }}>
         <h3 style={{ color: '#333' }}>Full-Text Search</h3>
         <form onSubmit={handleSearch} style={{ marginBottom: '1rem' }}>
