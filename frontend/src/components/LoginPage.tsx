@@ -51,7 +51,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ API_URL, onLoginSuccess }) => {
       minHeight: '100vh',
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: '#f5f5f5'
+      backgroundColor: '#f8fafc'
     }}>
       <div style={{
         width: '100%',
@@ -69,7 +69,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ API_URL, onLoginSuccess }) => {
               onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
             />
         </div>
-        <h1 style={{ textAlign: 'center', color: '#2c3e50', marginBottom: '0.5rem' }}>
+        <h1 style={{ textAlign: 'center', color: '#4c1d95', marginBottom: '0.5rem' }}>
           ERDMS
         </h1>
         <p style={{ textAlign: 'center', color: '#7f8c8d', marginBottom: '2rem', fontSize: '0.9rem' }}>
@@ -140,7 +140,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ API_URL, onLoginSuccess }) => {
             style={{
               width: '100%',
               padding: '0.75rem',
-              backgroundColor: loading ? '#ccc' : '#007bff',
+              backgroundColor: loading ? '#ccc' : '#6f42c1',
               color: 'white',
               border: 'none',
               borderRadius: '4px',

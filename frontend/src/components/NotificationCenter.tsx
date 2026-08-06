@@ -135,7 +135,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ API_URL }) => {
         <div>
           <h2 style={{ color: '#333', margin: 0 }}>Notifications</h2>
           {unreadCount > 0 && (
-            <span style={{ color: '#e74c3c', fontSize: '0.9rem' }}>{unreadCount} unread</span>
+            <span style={{ color: '#fd7e14', fontSize: '0.9rem' }}>{unreadCount} unread</span>
           )}
         </div>
         <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -145,7 +145,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ API_URL }) => {
               disabled={loading}
               style={{
                 padding: '0.4rem 0.75rem',
-                backgroundColor: '#007bff',
+                backgroundColor: '#6f42c1',
                 color: 'white',
                 border: 'none',
                 borderRadius: '4px',
@@ -192,9 +192,9 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ API_URL }) => {
               key={notification.id}
               style={{
                 padding: '1rem',
-                backgroundColor: notification.is_read ? '#f9f9f9' : '#e3f2fd',
+                backgroundColor: notification.is_read ? '#ffffff' : '#f3e8fd',
                 borderRadius: '6px',
-                borderLeft: `3px solid ${notification.is_read ? '#ddd' : '#007bff'}`,
+                borderLeft: `3px solid ${notification.is_read ? '#ddd' : '#6f42c1'}`,
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'flex-start',
@@ -229,7 +229,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ API_URL }) => {
                     onClick={() => handleMarkRead(notification.id)}
                     style={{
                       padding: '0.2rem 0.5rem',
-                      backgroundColor: '#007bff',
+                      backgroundColor: '#6f42c1',
                       color: 'white',
                       border: 'none',
                       borderRadius: '4px',
@@ -265,7 +265,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ API_URL }) => {
           padding: '2rem',
           textAlign: 'center',
           color: '#999',
-          backgroundColor: '#f9f9f9',
+          backgroundColor: '#ffffff',
           borderRadius: '8px'
         }}>
           <span style={{ fontSize: '2rem', marginBottom: '0.5rem', display: 'block' }}>🔔</span>

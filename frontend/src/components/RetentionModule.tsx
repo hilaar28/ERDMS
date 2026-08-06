@@ -196,10 +196,10 @@ const RetentionModule: React.FC<RetentionModuleProps> = ({ API_URL }) => {
               onClick={() => setActiveTab(tab.id)}
               style={{
                 padding: '0.75rem 1.5rem',
-                backgroundColor: activeTab === tab.id ? '#007bff' : 'transparent',
+                backgroundColor: activeTab === tab.id ? '#6f42c1' : 'transparent',
                 color: activeTab === tab.id ? 'white' : '#666',
                 border: 'none',
-                borderBottom: activeTab === tab.id ? '3px solid #007bff' : 'none',
+                borderBottom: activeTab === tab.id ? '3px solid #6f42c1' : 'none',
                 cursor: 'pointer',
                 fontSize: '0.9rem'
               }}
@@ -301,7 +301,7 @@ const RetentionModule: React.FC<RetentionModuleProps> = ({ API_URL }) => {
                 style={{
                   marginTop: '1rem',
                   padding: '0.6rem 1.5rem',
-                  backgroundColor: '#28a745',
+                  backgroundColor: '#fd7e14',
                   color: 'white',
                   border: 'none',
                   borderRadius: '4px',
@@ -316,7 +316,7 @@ const RetentionModule: React.FC<RetentionModuleProps> = ({ API_URL }) => {
           <h3 style={{ color: '#333' }}>Existing Policies</h3>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
-              <tr style={{ backgroundColor: '#f5f5f5' }}>
+              <tr style={{ backgroundColor: '#f8fafc' }}>
                 <th style={{ padding: '0.75rem', textAlign: 'left' }}>ID</th>
                 <th style={{ padding: '0.75rem', textAlign: 'left' }}>Name</th>
                 <th style={{ padding: '0.75rem', textAlign: 'left' }}>Type</th>
@@ -336,7 +336,7 @@ const RetentionModule: React.FC<RetentionModuleProps> = ({ API_URL }) => {
                   <td style={{ padding: '0.75rem' }}>{policy.department || 'Any'}</td>
                   <td style={{ padding: '0.75rem' }}>{policy.retention_period}</td>
                   <td style={{ padding: '0.75rem' }}>
-                    <span style={{ color: policy.is_active ? '#28a745' : '#dc3545' }}>
+                    <span style={{ color: policy.is_active ? '#fd7e14' : '#dc3545' }}>
                       {policy.is_active ? 'Yes' : 'No'}
                     </span>
                   </td>
@@ -346,7 +346,7 @@ const RetentionModule: React.FC<RetentionModuleProps> = ({ API_URL }) => {
                       onClick={() => handleTogglePolicy(policy)}
                       style={{
                         padding: '0.25rem 0.6rem',
-                        backgroundColor: policy.is_active ? '#dc3545' : '#28a745',
+                        backgroundColor: policy.is_active ? '#dc3545' : '#fd7e14',
                         color: 'white',
                         border: 'none',
                         borderRadius: '4px',
@@ -369,7 +369,7 @@ const RetentionModule: React.FC<RetentionModuleProps> = ({ API_URL }) => {
           <h3 style={{ color: '#333' }}>Retention Schedule</h3>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
-              <tr style={{ backgroundColor: '#f5f5f5' }}>
+              <tr style={{ backgroundColor: '#f8fafc' }}>
                 <th style={{ padding: '0.75rem', textAlign: 'left' }}>Document</th>
                 <th style={{ padding: '0.75rem', textAlign: 'left' }}>ID</th>
                 <th style={{ padding: '0.75rem', textAlign: 'left' }}>Policy</th>
@@ -387,7 +387,7 @@ const RetentionModule: React.FC<RetentionModuleProps> = ({ API_URL }) => {
                   <td style={{ padding: '0.75rem', textAlign: 'center' }}>
                     <span style={{
                       color: item.days_remaining <= 30 ? '#dc3545' :
-                             item.days_remaining <= 90 ? '#ffc107' : '#28a745'
+                             item.days_remaining <= 90 ? '#ffc107' : '#fd7e14'
                     }}>
                       {item.days_remaining}
                     </span>
@@ -405,7 +405,7 @@ const RetentionModule: React.FC<RetentionModuleProps> = ({ API_URL }) => {
           <h3 style={{ color: '#333', marginBottom: '1rem' }}>Documents Due for Disposal</h3>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
-              <tr style={{ backgroundColor: '#f5f5f5' }}>
+              <tr style={{ backgroundColor: '#f8fafc' }}>
                 <th style={{ padding: '0.75rem', textAlign: 'left' }}>Document</th>
                 <th style={{ padding: '0.75rem', textAlign: 'left' }}>ID</th>
                 <th style={{ padding: '0.75rem', textAlign: 'left' }}>Policy</th>

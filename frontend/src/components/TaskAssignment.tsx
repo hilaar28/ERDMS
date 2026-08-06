@@ -240,16 +240,16 @@ const TaskAssignment: React.FC<TaskAssignmentProps> = ({ API_URL }) => {
   };
 
   const priorityColors: Record<string, string> = {
-    low: '#28a745',
-    normal: '#007bff',
+    low: '#fd7e14',
+    normal: '#6f42c1',
     high: '#ffc107',
     urgent: '#dc3545'
   };
 
   const statusOptions = [
     { value: 'pending', label: 'Pending', color: '#6c757d' },
-    { value: 'in_progress', label: 'In Progress', color: '#007bff' },
-    { value: 'completed', label: 'Completed', color: '#28a745' },
+    { value: 'in_progress', label: 'In Progress', color: '#6f42c1' },
+    { value: 'completed', label: 'Completed', color: '#fd7e14' },
     { value: 'cancelled', label: 'Cancelled', color: '#dc3545' },
   ];
 
@@ -259,13 +259,13 @@ const TaskAssignment: React.FC<TaskAssignmentProps> = ({ API_URL }) => {
         <div style={{ display: 'flex', gap: '0.5rem' }}>
           <button
             onClick={() => { fetchTasks(); setShowCreateForm(false); setShowAssignForm(false); }}
-            style={{ padding: '0.5rem 1rem', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+            style={{ padding: '0.5rem 1rem', backgroundColor: '#6f42c1', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
           >
             All Tasks
           </button>
           <button
             onClick={() => { fetchMyTasks(); setShowCreateForm(false); setShowAssignForm(false); }}
-            style={{ padding: '0.5rem 1rem', backgroundColor: '#28a745', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+            style={{ padding: '0.5rem 1rem', backgroundColor: '#fd7e14', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
           >
             My Tasks
           </button>
@@ -273,7 +273,7 @@ const TaskAssignment: React.FC<TaskAssignmentProps> = ({ API_URL }) => {
         <div style={{ display: 'flex', gap: '0.5rem' }}>
           <button
             onClick={() => { setShowCreateForm(true); setShowAssignForm(false); }}
-            style={{ padding: '0.5rem 1rem', backgroundColor: '#28a745', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+            style={{ padding: '0.5rem 1rem', backgroundColor: '#fd7e14', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
           >
             + New Task
           </button>
@@ -298,7 +298,7 @@ const TaskAssignment: React.FC<TaskAssignmentProps> = ({ API_URL }) => {
 
       {showCreateForm && (
         <div style={{
-          padding: '1.5rem', backgroundColor: '#f9f9f9', borderRadius: '8px', marginBottom: '1.5rem'
+          padding: '1.5rem', backgroundColor: '#ffffff', borderRadius: '8px', marginBottom: '1.5rem'
         }}>
           <h3 style={{ color: '#333', marginTop: '0' }}>Create New Task</h3>
           <form onSubmit={handleCreateTask}>
@@ -378,7 +378,7 @@ const TaskAssignment: React.FC<TaskAssignmentProps> = ({ API_URL }) => {
               <button
                 type="submit"
                 disabled={loading}
-                style={{ padding: '0.5rem 1rem', backgroundColor: '#28a745', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+                style={{ padding: '0.5rem 1rem', backgroundColor: '#fd7e14', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
               >
                 {loading ? 'Creating...' : 'Create Task'}
               </button>
@@ -483,8 +483,8 @@ const TaskAssignment: React.FC<TaskAssignmentProps> = ({ API_URL }) => {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{
                 padding: '0.15rem 0.5rem',
-                backgroundColor: `${priorityColors[task.priority] || '#007bff'}20`,
-                color: priorityColors[task.priority] || '#007bff',
+                backgroundColor: `${priorityColors[task.priority] || '#6f42c1'}20`,
+                color: priorityColors[task.priority] || '#6f42c1',
                 borderRadius: '10px',
                 fontSize: '0.75rem'
               }}>
@@ -527,7 +527,7 @@ const TaskAssignment: React.FC<TaskAssignmentProps> = ({ API_URL }) => {
               )}
             </div>
             <div style={{ backgroundColor: '#f8f9fa', padding: '1rem', borderRadius: '8px' }}>
-              <h4 style={{ margin: '0 0 0.75rem 0', color: '#007bff', fontSize: '0.9rem' }}>
+              <h4 style={{ margin: '0 0 0.75rem 0', color: '#6f42c1', fontSize: '0.9rem' }}>
                 In Progress ({inProgress.length})
               </h4>
               {inProgress.length > 0 ? inProgress.map(renderTaskCard) : (
@@ -535,7 +535,7 @@ const TaskAssignment: React.FC<TaskAssignmentProps> = ({ API_URL }) => {
               )}
             </div>
             <div style={{ backgroundColor: '#f8f9fa', padding: '1rem', borderRadius: '8px' }}>
-              <h4 style={{ margin: '0 0 0.75rem 0', color: '#28a745', fontSize: '0.9rem' }}>
+              <h4 style={{ margin: '0 0 0.75rem 0', color: '#fd7e14', fontSize: '0.9rem' }}>
                 Completed ({completed.length})
               </h4>
               {completed.length > 0 ? completed.map(renderTaskCard) : (

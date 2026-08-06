@@ -110,7 +110,7 @@ const IndexingModule: React.FC<IndexingModuleProps> = ({ API_URL }) => {
             disabled={loading || !searchQuery.trim()}
             style={{
               padding: '0.75rem 1.5rem',
-              backgroundColor: '#007bff',
+              backgroundColor: '#6f42c1',
               color: 'white',
               border: 'none',
               borderRadius: '4px',
@@ -143,7 +143,7 @@ const IndexingModule: React.FC<IndexingModuleProps> = ({ API_URL }) => {
             disabled={loading || !tagQuery.trim()}
             style={{
               padding: '0.75rem 1.5rem',
-              backgroundColor: '#007bff',
+              backgroundColor: '#6f42c1',
               color: 'white',
               border: 'none',
               borderRadius: '4px',
@@ -172,7 +172,7 @@ const IndexingModule: React.FC<IndexingModuleProps> = ({ API_URL }) => {
           <h3 style={{ color: '#333' }}>Search Results</h3>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
-              <tr style={{ backgroundColor: '#f5f5f5' }}>
+              <tr style={{ backgroundColor: '#f8fafc' }}>
                 <th style={{ padding: '0.75rem', textAlign: 'left' }}>Name</th>
                 <th style={{ padding: '0.75rem', textAlign: 'left' }}>Department</th>
                 <th style={{ padding: '0.75rem', textAlign: 'left' }}>Province</th>
@@ -197,7 +197,7 @@ const IndexingModule: React.FC<IndexingModuleProps> = ({ API_URL }) => {
             <h3 style={{ color: '#333' }}>All Documents</h3>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
-                <tr style={{ backgroundColor: '#f5f5f5' }}>
+                <tr style={{ backgroundColor: '#f8fafc' }}>
                   <th style={{ padding: '0.75rem', textAlign: 'left' }}>ID</th>
                   <th style={{ padding: '0.75rem', textAlign: 'left' }}>Name</th>
                   <th style={{ padding: '0.75rem', textAlign: 'left' }}>Add Tag</th>
@@ -220,7 +220,7 @@ const IndexingModule: React.FC<IndexingModuleProps> = ({ API_URL }) => {
                         onClick={() => handleAddTag(doc.id)}
                         style={{
                           padding: '0.25rem 0.5rem',
-                          backgroundColor: '#28a745',
+                          backgroundColor: '#fd7e14',
                           color: 'white',
                           border: 'none',
                           borderRadius: '4px',

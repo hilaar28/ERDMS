@@ -140,10 +140,10 @@ const AuditTrail: React.FC<AuditTrailProps> = ({ API_URL }) => {
               onClick={() => setActiveTab(tab.id)}
               style={{
                 padding: '0.75rem 1.5rem',
-                backgroundColor: activeTab === tab.id ? '#007bff' : 'transparent',
+                backgroundColor: activeTab === tab.id ? '#6f42c1' : 'transparent',
                 color: activeTab === tab.id ? 'white' : '#666',
                 border: 'none',
-                borderBottom: activeTab === tab.id ? '3px solid #007bff' : 'none',
+                borderBottom: activeTab === tab.id ? '3px solid #6f42c1' : 'none',
                 cursor: 'pointer',
                 fontSize: '0.9rem'
               }}
@@ -212,7 +212,7 @@ const AuditTrail: React.FC<AuditTrailProps> = ({ API_URL }) => {
             onClick={() => { fetchEntries(); fetchSummary(); }}
             style={{
               padding: '0.5rem 1rem',
-              backgroundColor: '#007bff',
+              backgroundColor: '#6f42c1',
               color: 'white',
               border: 'none',
               borderRadius: '4px',
@@ -226,7 +226,7 @@ const AuditTrail: React.FC<AuditTrailProps> = ({ API_URL }) => {
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
               <thead>
-                <tr style={{ backgroundColor: '#f5f5f5' }}>
+                <tr style={{ backgroundColor: '#f8fafc' }}>
                   <th style={{ padding: '0.5rem', textAlign: 'left' }}>ID</th>
                   <th style={{ padding: '0.5rem', textAlign: 'left' }}>Action</th>
                   <th style={{ padding: '0.5rem', textAlign: 'left' }}>Document</th>
@@ -272,7 +272,7 @@ const AuditTrail: React.FC<AuditTrailProps> = ({ API_URL }) => {
             disabled={loading}
             style={{
               padding: '0.6rem 1.2rem',
-              backgroundColor: '#007bff',
+              backgroundColor: '#6f42c1',
               color: 'white',
               border: 'none',
               borderRadius: '4px',
@@ -288,7 +288,7 @@ const AuditTrail: React.FC<AuditTrailProps> = ({ API_URL }) => {
               padding: '1.5rem',
               backgroundColor: integrityResult.is_integrity_valid ? '#d4edda' : '#f8d7da',
               borderRadius: '8px',
-              border: `2px solid ${integrityResult.is_integrity_valid ? '#28a745' : '#dc3545'}`
+              border: `2px solid ${integrityResult.is_integrity_valid ? '#fd7e14' : '#dc3545'}`
             }}>
               <h3 style={{ marginTop: '0', color: integrityResult.is_integrity_valid ? '#155724' : '#721c24' }}>
                 {integrityResult.is_integrity_valid ? '✓ Integrity Verified' : '✗ Integrity Compromised'}
@@ -356,7 +356,7 @@ const AuditTrail: React.FC<AuditTrailProps> = ({ API_URL }) => {
           <h3 style={{ color: '#333' }}>Action Statistics</h3>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
-              <tr style={{ backgroundColor: '#f5f5f5' }}>
+              <tr style={{ backgroundColor: '#f8fafc' }}>
                 <th style={{ padding: '0.5rem', textAlign: 'left' }}>Action</th>
                 <th style={{ padding: '0.5rem', textAlign: 'left' }}>Count</th>
                 <th style={{ padding: '0.5rem', textAlign: 'left' }}>Users</th>

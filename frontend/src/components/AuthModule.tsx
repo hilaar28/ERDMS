@@ -331,10 +331,10 @@ const AuthModule: React.FC<AuthModuleProps> = ({ API_URL }) => {
               onClick={() => setActiveTab(tab.id)}
               style={{
                 padding: '0.75rem 1.5rem',
-                backgroundColor: activeTab === tab.id ? '#007bff' : 'transparent',
+                backgroundColor: activeTab === tab.id ? '#6f42c1' : 'transparent',
                 color: activeTab === tab.id ? 'white' : '#666',
                 border: 'none',
-                borderBottom: activeTab === tab.id ? '3px solid #007bff' : 'none',
+                borderBottom: activeTab === tab.id ? '3px solid #6f42c1' : 'none',
                 cursor: 'pointer',
                 fontSize: '0.9rem'
               }}
@@ -393,7 +393,7 @@ const AuthModule: React.FC<AuthModuleProps> = ({ API_URL }) => {
                 disabled={loading || !selectedUserId || !selectedRoleId}
                 style={{
                   padding: '0.5rem 1rem',
-                  backgroundColor: '#28a745',
+                  backgroundColor: '#fd7e14',
                   color: 'white',
                   border: 'none',
                   borderRadius: '4px',
@@ -409,7 +409,7 @@ const AuthModule: React.FC<AuthModuleProps> = ({ API_URL }) => {
           <h3 style={{ color: '#333' }}>User List</h3>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
-              <tr style={{ backgroundColor: '#f5f5f5' }}>
+              <tr style={{ backgroundColor: '#f8fafc' }}>
                 <th style={{ padding: '0.75rem', textAlign: 'left' }}>ID</th>
                 <th style={{ padding: '0.75rem', textAlign: 'left' }}>Full Name</th>
                 <th style={{ padding: '0.75rem', textAlign: 'left' }}>Username</th>
@@ -445,7 +445,7 @@ const AuthModule: React.FC<AuthModuleProps> = ({ API_URL }) => {
                         }}
                         style={{
                           padding: '0.3rem 0.6rem',
-                          backgroundColor: '#007bff',
+                          backgroundColor: '#6f42c1',
                           color: 'white',
                           border: 'none',
                           borderRadius: '4px',
@@ -500,7 +500,7 @@ const AuthModule: React.FC<AuthModuleProps> = ({ API_URL }) => {
                 disabled={loading}
                 style={{
                   padding: '0.5rem 1rem',
-                  backgroundColor: editingRoleId ? '#007bff' : '#28a745',
+                  backgroundColor: editingRoleId ? '#6f42c1' : '#fd7e14',
                   color: 'white',
                   border: 'none',
                   borderRadius: '4px',
@@ -530,7 +530,7 @@ const AuthModule: React.FC<AuthModuleProps> = ({ API_URL }) => {
 
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
-              <tr style={{ backgroundColor: '#f5f5f5' }}>
+              <tr style={{ backgroundColor: '#f8fafc' }}>
                 <th style={{ padding: '0.75rem', textAlign: 'left' }}>ID</th>
                 <th style={{ padding: '0.75rem', textAlign: 'left' }}>Role Name</th>
                 <th style={{ padding: '0.75rem', textAlign: 'left' }}>Description</th>
@@ -543,12 +543,12 @@ const AuthModule: React.FC<AuthModuleProps> = ({ API_URL }) => {
                 const rolePerms = rolePermissionsMap[role.id] || [];
                 return (
                   <React.Fragment key={role.id}>
-                    <tr style={{ borderBottom: '1px solid #eee', backgroundColor: isExpanded ? '#f0f7ff' : 'transparent' }}>
+                    <tr style={{ borderBottom: '1px solid #eee', backgroundColor: isExpanded ? '#f3e8fd' : 'transparent' }}>
                       <td style={{ padding: '0.75rem' }}>{role.id}</td>
                       <td style={{ padding: '0.75rem', fontWeight: 500 }}>
                         <button
                           onClick={() => toggleExpandRole(role.id)}
-                          style={{ background: 'none', border: 'none', color: '#007bff', cursor: 'pointer', padding: 0, fontWeight: 500, fontSize: 'inherit' }}
+                          style={{ background: 'none', border: 'none', color: '#6f42c1', cursor: 'pointer', padding: 0, fontWeight: 500, fontSize: 'inherit' }}
                         >
                           {role.name} {isExpanded ? '▲' : '▼'}
                         </button>
@@ -560,7 +560,7 @@ const AuthModule: React.FC<AuthModuleProps> = ({ API_URL }) => {
                           style={{
                             padding: '0.3rem 0.6rem',
                             marginRight: '0.3rem',
-                            backgroundColor: '#007bff',
+                            backgroundColor: '#6f42c1',
                             color: 'white',
                             border: 'none',
                             borderRadius: '4px',
@@ -602,7 +602,7 @@ const AuthModule: React.FC<AuthModuleProps> = ({ API_URL }) => {
                                     padding: '0.35rem 0.75rem',
                                     border: '1px solid #ddd',
                                     borderRadius: '20px',
-                                    backgroundColor: assigned ? '#007bff' : 'white',
+                                    backgroundColor: assigned ? '#6f42c1' : 'white',
                                     color: assigned ? 'white' : '#333',
                                     cursor: 'pointer',
                                     fontSize: '0.85rem'

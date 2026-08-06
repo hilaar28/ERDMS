@@ -96,7 +96,7 @@ const DocumentRegistration: React.FC<DocumentRegistrationProps> = ({ API_URL }) 
 
   return (
     <div>
-      <div style={{ marginBottom: '2rem', padding: '1.5rem', backgroundColor: '#f9f9f9', borderRadius: '8px' }}>
+      <div style={{ marginBottom: '2rem', padding: '1.5rem', backgroundColor: '#ffffff', borderRadius: '8px' }}>
         <form onSubmit={handleSubmit}>
           <div style={{ marginBottom: '1rem' }}>
             <label htmlFor="documentName" style={{ display: 'block', marginBottom: '0.5rem' }}>
@@ -196,7 +196,7 @@ const DocumentRegistration: React.FC<DocumentRegistrationProps> = ({ API_URL }) 
             disabled={loading || !newDocName.trim() || !selectedFile}
             style={{
               padding: '0.75rem 1.5rem',
-              backgroundColor: loading ? '#ccc' : '#007bff',
+              backgroundColor: loading ? '#ccc' : '#6f42c1',
               color: 'white',
               border: 'none',
               borderRadius: '4px',

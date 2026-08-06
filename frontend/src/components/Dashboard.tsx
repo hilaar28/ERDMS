@@ -161,7 +161,7 @@ const Dashboard: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
                     padding: '1.5rem',
                     border: '1px solid #ddd',
                     borderRadius: '8px',
-                    backgroundColor: '#f9f9f9',
+                    backgroundColor: '#ffffff',
                     cursor: 'pointer',
                     textAlign: 'center',
                     fontSize: '1rem',
@@ -218,10 +218,10 @@ const Dashboard: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
   };
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
+    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#f8fafc' }}>
       <div style={{
         width: '250px',
-        backgroundColor: '#2c3e50',
+        backgroundColor: '#4c1d95',
         color: 'white',
         padding: '1rem',
         position: 'fixed',
@@ -233,7 +233,7 @@ const Dashboard: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
           alignItems: 'center',
           gap: '0.75rem',
           padding: '0.5rem',
-          borderBottom: '1px solid #34495e',
+          borderBottom: '1px solid #7e22ce',
           marginBottom: '1rem'
         }}>
           <img
@@ -266,7 +266,7 @@ const Dashboard: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
               {item.icon} {item.label}
               {item.id === 'notifications' && unreadCount > 0 && (
                 <span style={{
-                  backgroundColor: '#e74c3c',
+                  backgroundColor: '#fd7e14',
                   color: 'white',
                   borderRadius: '50%',
                   padding: '0.15rem 0.5rem',
@@ -280,13 +280,13 @@ const Dashboard: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
           ))}
         </nav>
         {user && (
-          <div style={{ marginTop: '2rem', padding: '0.5rem', borderTop: '1px solid #34495e' }}>
+          <div style={{ marginTop: '2rem', padding: '0.5rem', borderTop: '1px solid #7e22ce' }}>
             <button
               onClick={handleLogout}
               style={{
                 width: '100%',
                 padding: '0.5rem',
-                backgroundColor: '#e74c3c',
+                backgroundColor: '#fd7e14',
                 color: 'white',
                 border: 'none',
                 borderRadius: '4px',
@@ -317,7 +317,7 @@ const Dashboard: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
               style={{
                 position: 'relative',
                 padding: '0.5rem 0.75rem',
-                backgroundColor: '#2c3e50',
+                backgroundColor: '#4c1d95',
                 color: 'white',
                 border: 'none',
                 borderRadius: '50px',
@@ -332,7 +332,7 @@ const Dashboard: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
                   position: 'absolute',
                   top: '-5px',
                   right: '-5px',
-                  backgroundColor: '#e74c3c',
+                  backgroundColor: '#fd7e14',
                   color: 'white',
                   borderRadius: '50%',
                   padding: '0.1px 6px',
@@ -365,7 +365,7 @@ const Dashboard: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
                 <div style={{
                   padding: '0.5rem 1rem',
                   borderBottom: '1px solid #eee',
-                  backgroundColor: '#f5f5f5',
+                  backgroundColor: '#f8fafc',
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center'
@@ -377,7 +377,7 @@ const Dashboard: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
                       style={{
                         padding: '0.2rem 0.5rem',
                         backgroundColor: 'transparent',
-                        color: '#007bff',
+                        color: '#6f42c1',
                         border: 'none',
                         borderRadius: '4px',
                         cursor: 'pointer',
@@ -403,7 +403,7 @@ const Dashboard: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
                         style={{
                           padding: '0.75rem',
                           borderBottom: '1px solid #eee',
-                          backgroundColor: notif.is_read ? 'white' : '#e3f2fd',
+                          backgroundColor: notif.is_read ? 'white' : '#f3e8fd',
                           cursor: notif.document_id ? 'pointer' : 'default'
                         }}
                       >
@@ -429,7 +429,7 @@ const Dashboard: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
                       style={{
                         padding: '0.3rem 0.75rem',
                         backgroundColor: 'transparent',
-                        color: '#007bff',
+                        color: '#6f42c1',
                         border: 'none',
                         borderRadius: '4px',
                         cursor: 'pointer',

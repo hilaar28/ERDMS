@@ -134,7 +134,7 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId, API_URL, on
         <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: '#999' }}>✕</button>
       </div>
 
-      <div style={{ padding: '1rem', backgroundColor: '#f9f9f9', borderRadius: '8px', marginBottom: '1.5rem' }}>
+      <div style={{ padding: '1rem', backgroundColor: '#ffffff', borderRadius: '8px', marginBottom: '1.5rem' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1rem' }}>
           <div>
             <strong>File:</strong> {document.original_filename}
@@ -159,7 +159,7 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId, API_URL, on
           onClick={handleViewDocument}
           style={{
             padding: '0.6rem 1.2rem',
-            backgroundColor: '#007bff',
+            backgroundColor: '#6f42c1',
             color: 'white',
             border: 'none',
             borderRadius: '4px',
@@ -205,7 +205,7 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId, API_URL, on
             disabled={submitting || !newComment.trim()}
             style={{
               padding: '0.5rem 1rem',
-              backgroundColor: '#28a745',
+              backgroundColor: '#fd7e14',
               color: 'white',
               border: 'none',
               borderRadius: '4px',
@@ -221,9 +221,9 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId, API_URL, on
             {comments.map(comment => (
               <div key={comment.id} style={{
                 padding: '0.75rem',
-                backgroundColor: '#f9f9f9',
+                backgroundColor: '#ffffff',
                 borderRadius: '6px',
-                borderLeft: '3px solid #007bff'
+                borderLeft: '3px solid #6f42c1'
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
                   <strong style={{ color: '#333' }}>

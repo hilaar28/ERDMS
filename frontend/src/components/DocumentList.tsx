@@ -20,7 +20,7 @@ const DocumentList: React.FC<DocumentListProps> = ({ documents, onAction }) => {
       <h2>Registered Documents</h2>
       <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '1rem' }}>
         <thead>
-          <tr style={{ backgroundColor: '#f5f5f5' }}>
+          <tr style={{ backgroundColor: '#f8fafc' }}>
             <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '2px solid #ddd' }}>ID</th>
             <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '2px solid #ddd' }}>Name</th>
             <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '2px solid #ddd' }}>Original File</th>
@@ -48,7 +48,7 @@ const DocumentList: React.FC<DocumentListProps> = ({ documents, onAction }) => {
                     style={{
                       padding: '0.3rem 0.6rem',
                       marginRight: '0.3rem',
-                      backgroundColor: '#007bff',
+                      backgroundColor: '#6f42c1',
                       color: 'white',
                       border: 'none',
                       borderRadius: '4px',

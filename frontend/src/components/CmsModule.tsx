@@ -134,7 +134,7 @@ const CmsModule: React.FC<CmsModuleProps> = ({ API_URL }) => {
             disabled={loading || !caseId.trim()}
             style={{
               padding: '0.75rem 1.5rem',
-              backgroundColor: '#007bff',
+              backgroundColor: '#6f42c1',
               color: 'white',
               border: 'none',
               borderRadius: '4px',
@@ -150,7 +150,7 @@ const CmsModule: React.FC<CmsModuleProps> = ({ API_URL }) => {
             onClick={handleSyncDocuments}
             style={{
               padding: '0.5rem 1rem',
-              backgroundColor: '#28a745',
+              backgroundColor: '#fd7e14',
               color: 'white',
               border: 'none',
               borderRadius: '4px',
@@ -163,7 +163,7 @@ const CmsModule: React.FC<CmsModuleProps> = ({ API_URL }) => {
       </div>
 
       {caseData && (
-        <div style={{ marginBottom: '2rem', padding: '1rem', backgroundColor: '#f9f9f9', borderRadius: '4px' }}>
+        <div style={{ marginBottom: '2rem', padding: '1rem', backgroundColor: '#ffffff', borderRadius: '4px' }}>
           <h3 style={{ color: '#333' }}>Case Details: {caseId || caseData.id}</h3>
           <pre style={{ backgroundColor: '#f0f0f0', padding: '1rem', borderRadius: '4px', overflowX: 'auto' }}>
             {JSON.stringify(caseData, null, 2)}
@@ -176,7 +176,7 @@ const CmsModule: React.FC<CmsModuleProps> = ({ API_URL }) => {
           <h3 style={{ color: '#333' }}>Linked Documents</h3>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
-              <tr style={{ backgroundColor: '#f5f5f5' }}>
+              <tr style={{ backgroundColor: '#f8fafc' }}>
                 <th style={{ padding: '0.5rem', textAlign: 'left' }}>ID</th>
                 <th style={{ padding: '0.5rem', textAlign: 'left' }}>Name</th>
                 <th style={{ padding: '0.5rem', textAlign: 'left' }}>Created</th>
@@ -215,7 +215,7 @@ const CmsModule: React.FC<CmsModuleProps> = ({ API_URL }) => {
             disabled={!caseId.trim() || !documentName.trim()}
             style={{
               padding: '0.75rem 1.5rem',
-              backgroundColor: '#28a745',
+              backgroundColor: '#fd7e14',
               color: 'white',
               border: 'none',
               borderRadius: '4px',

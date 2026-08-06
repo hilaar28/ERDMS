@@ -120,7 +120,7 @@ const CollaborationPanel: React.FC<CollaborationPanelProps> = ({ documentId, API
 
   const workflowOptions = [
     { value: 'in_review', label: 'Submit for Review', color: '#ffc107' },
-    { value: 'approved', label: 'Approve', color: '#28a745' },
+    { value: 'approved', label: 'Approve', color: '#fd7e14' },
     { value: 'rejected', label: 'Reject', color: '#dc3545' },
   ];
 
@@ -149,12 +149,12 @@ const CollaborationPanel: React.FC<CollaborationPanelProps> = ({ documentId, API
         <h3 style={{ color: '#333' }}>Workflow Status</h3>
         <div style={{
           padding: '0.75rem',
-          backgroundColor: '#f9f9f9',
+          backgroundColor: '#ffffff',
           borderRadius: '4px',
           marginBottom: '1rem'
         }}>
           Current Status: <strong style={{
-            color: workflowStatus?.status === 'approved' ? '#28a745' :
+            color: workflowStatus?.status === 'approved' ? '#fd7e14' :
                    workflowStatus?.status === 'rejected' ? '#dc3545' :
                    workflowStatus?.status === 'in_review' ? '#ffc107' : '#6c757d'
           }}>{workflowStatus?.status || 'draft'}</strong>
@@ -192,7 +192,7 @@ const CollaborationPanel: React.FC<CollaborationPanelProps> = ({ documentId, API
             onClick={() => setShowAddComment(!showAddComment)}
             style={{
               padding: '0.4rem 0.75rem',
-              backgroundColor: '#007bff',
+              backgroundColor: '#6f42c1',
               color: 'white',
               border: 'none',
               borderRadius: '4px',
@@ -226,7 +226,7 @@ const CollaborationPanel: React.FC<CollaborationPanelProps> = ({ documentId, API
                 disabled={loading || !newComment.trim()}
                 style={{
                   padding: '0.5rem 1rem',
-                  backgroundColor: '#28a745',
+                  backgroundColor: '#fd7e14',
                   color: 'white',
                   border: 'none',
                   borderRadius: '4px',
@@ -258,9 +258,9 @@ const CollaborationPanel: React.FC<CollaborationPanelProps> = ({ documentId, API
             {comments.map(comment => (
               <div key={comment.id} style={{
                 padding: '0.75rem',
-                backgroundColor: '#f9f9f9',
+                backgroundColor: '#ffffff',
                 borderRadius: '6px',
-                borderLeft: '3px solid #007bff'
+                borderLeft: '3px solid #6f42c1'
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
                   <strong style={{ color: '#333' }}>

@@ -196,7 +196,7 @@ return (
         disabled={loading || !newDocName.trim() || !selectedFile}
         style={{
           padding: '0.75rem 1.5rem',
-          backgroundColor: loading ? '#ccc' : '#007bff',
+          backgroundColor: loading ? '#ccc' : '#6f42c1',
           color: 'white',
           border: 'none',
           borderRadius: '4px',

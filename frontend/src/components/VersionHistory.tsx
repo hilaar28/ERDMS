@@ -118,7 +118,7 @@ const VersionHistory: React.FC<VersionHistoryProps> = ({ documentId, API_URL, on
       {versions.length > 0 ? (
         <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '2rem' }}>
           <thead>
-            <tr style={{ backgroundColor: '#f5f5f5' }}>
+            <tr style={{ backgroundColor: '#f8fafc' }}>
               <th style={{ padding: '0.5rem', textAlign: 'left' }}>Version</th>
               <th style={{ padding: '0.5rem', textAlign: 'left' }}>Name</th>
               <th style={{ padding: '0.5rem', textAlign: 'left' }}>File</th>
@@ -143,7 +143,7 @@ const VersionHistory: React.FC<VersionHistoryProps> = ({ documentId, API_URL, on
                     disabled={loading || v.version_number === versions[0]?.version_number}
                     style={{
                       padding: '0.25rem 0.5rem',
-                      backgroundColor: '#007bff',
+                      backgroundColor: '#6f42c1',
                       color: 'white',
                       border: 'none',
                       borderRadius: '4px',
@@ -166,7 +166,7 @@ const VersionHistory: React.FC<VersionHistoryProps> = ({ documentId, API_URL, on
       {auditLog.length > 0 ? (
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
-            <tr style={{ backgroundColor: '#f5f5f5' }}>
+            <tr style={{ backgroundColor: '#f8fafc' }}>
               <th style={{ padding: '0.5rem', textAlign: 'left' }}>Action</th>
               <th style={{ padding: '0.5rem', textAlign: 'left' }}>User</th>
               <th style={{ padding: '0.5rem', textAlign: 'left' }}>Timestamp</th>
