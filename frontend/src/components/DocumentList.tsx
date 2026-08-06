@@ -1,4 +1,5 @@
 import React from 'react';
+import { getFriendlyTypeName } from '../utils/format';
 
 interface Document {
   id: number;
@@ -43,7 +44,7 @@ const DocumentList: React.FC<DocumentListProps> = ({ documents, onAction, showTy
               <td style={{ padding: '0.75rem' }}>{doc.original_filename || 'N/A'}</td>
               <td style={{ padding: '0.75rem' }}>{doc.file_size ? `${(doc.file_size / 1024).toFixed(1)} KB` : 'N/A'}</td>
               {showType && (
-                <td style={{ padding: '0.75rem' }}>{doc.mime_type || 'N/A'}</td>
+                <td style={{ padding: '0.75rem' }}>{getFriendlyTypeName(doc.mime_type)}</td>
               )}
               <td style={{ padding: '0.75rem' }}>{new Date(doc.created_at).toLocaleString()}</td>
               {onAction && (

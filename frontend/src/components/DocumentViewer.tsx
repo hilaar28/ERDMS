@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { getFriendlyTypeName } from '../utils/format';
 
 interface DocumentViewerProps {
   documentId: number;
@@ -143,7 +144,7 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId, API_URL, on
             <strong>Size:</strong> {document.file_size ? `${(document.file_size / 1024).toFixed(1)} KB` : 'N/A'}
           </div>
           <div>
-            <strong>Type:</strong> {document.mime_type || 'N/A'}
+            <strong>Type:</strong> {getFriendlyTypeName(document.mime_type)}
           </div>
           <div>
             <strong>Department:</strong> {document.department || 'N/A'}
