@@ -226,3 +226,30 @@ export async function requireTaskAssignment(req, res, next) {
     return res.status(500).json({ error: 'Authorization check failed' });
   }
 }
+
+/*
+ * Check whether `userId` has admin-level access.
+ * Returns true for Administrator role or anyone with the `document:admin` permission.
+ */
+export async function isUserAdmin(userId) {
+  const { roles, permissions } = await getUserPermissionsAndRoles(userId);
+  const isAdmin = roles.some(r => r.name === 'Administrator');
+  const hasAdminPermission = permissions.some(p => p.name === 'document:admin');
+  return isAdmin || hasAdminPermission;
+}
+
+/*
+ * Build a WHERE-clause fragment for document ownership scoping.
+ * Admins see everything; regular users only see documents they created.
+ * Returns { clause, params } to splice into a query.
+ */
+export async function buildDocumentScope(req) {
+  const isAdmin = await isUserAdmin(req.user.id);
+  if (isAdmin) {
+    return { clause: '', params: [] };
+  }
+  return {
+    clause: ' AND created_by = $1',
+    params: [req.user.id],
+  };
+}

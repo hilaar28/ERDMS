@@ -20,7 +20,7 @@ import {
   createNotification
 } from '../models/tasks.js';
 import { createAuditLog } from '../models/versions.js';
-import { requireTaskAccess, requireTaskAssignment } from '../middleware/authorization.js';
+import { requireTaskAccess, requireTaskAssignment, isUserAdmin } from '../middleware/authorization.js';
 
 const router = express.Router();
 
@@ -65,7 +65,7 @@ router.post('/tasks', requirePermission('document:create'), async (req, res) => 
   }
 });
 
-router.get('/tasks', requireAuth, requirePermission('document:search'), async (req, res) => {
+router.get('/tasks', requirePermission('document:search'), async (req, res) => {
   try {
     const filters = {};
     if (req.query.assignedTo) filters.assignedTo = parseInt(req.query.assignedTo);
@@ -75,8 +75,13 @@ router.get('/tasks', requireAuth, requirePermission('document:search'), async (r
     if (req.query.priority) filters.priority = req.query.priority;
     if (req.query.overdue) filters.overdue = req.query.overdue;
 
+    const isAdmin = await isUserAdmin(req.user.id);
+    if (!isAdmin) {
+      filters.assignedTo = req.user.id;
+    }
+
     const tasks = await getTasks(filters);
-    res.json({ data: tasks });
+    res.json({ data: tasks, count: tasks.length });
   } catch (error) {
     console.error('Error fetching tasks:', error);
     res.status(500).json({ error: 'Failed to fetch tasks' });

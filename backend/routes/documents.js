@@ -6,7 +6,7 @@ import { validateFile } from '../utils/fileValidation.js';
 import { createVersion, createAuditLog } from '../models/versions.js';
 import { createImmutableAuditEntry } from '../models/auditTrail.js';
 import { requireAuth, requirePermission } from '../middleware/auth.js';
-import { requireDocumentAccess, requireDocumentWriteAccess, requireDocumentOwnership } from '../middleware/authorization.js';
+import { requireDocumentAccess, requireDocumentWriteAccess, requireDocumentOwnership, isUserAdmin, buildDocumentScope } from '../middleware/authorization.js';
 
 const router = express.Router();
 
@@ -22,7 +22,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 // Document upload route with metadata
-router.post('/upload', upload.single('document'), async (req, res) => {
+router.post('/upload', requireAuth, upload.single('document'), async (req, res) => {
   try {
     const file = req.file;
     const rawMetadata = req.body.documentMetadata;
@@ -155,17 +155,42 @@ router.get('/documents/:id', requireAuth, requireDocumentAccess, async (req, res
   }
 });
 
-// Get all documents route
-router.get('/documents', async (req, res) => {
+// Get all documents route — scoped to current user's department/ownership
+router.get('/documents', requireAuth, requirePermission('document:search'), async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM documents ORDER BY created_at DESC');
+    const { clause: scopeClause, params: scopeParams } = await buildDocumentScope(req);
+
+    let query = `
+      SELECT d.*,
+             u.username as created_by_username,
+             u.full_name as created_by_full_name
+      FROM documents d
+      LEFT JOIN users u ON d.created_by = u.id
+      WHERE 1=1 ${scopeClause}
+    `;
+
+    if (req.query.department) {
+      const paramIndex = scopeParams.length + 1;
+      query += ` AND d.department = $${paramIndex}`;
+      scopeParams.push(req.query.department);
+    }
+
+    if (req.query.category) {
+      const paramIndex = scopeParams.length + 1;
+      query += ` AND d.category = $${paramIndex}`;
+      scopeParams.push(req.query.category);
+    }
+
+    query += ' ORDER BY d.created_at DESC LIMIT 100';
+
+    const result = await pool.query(query, scopeParams);
 
     const documents = result.rows.map(doc => ({
       ...doc,
       bucketUrl: `http://${process.env.MINIO_ENDPOINT || 'localhost'}:${process.env.MINIO_PORT || '9000'}/${process.env.MINIO_BUCKET || 'erkms-bucks'}/${doc.stored_filename || doc.name}`
     }));
 
-    res.json({ data: documents });
+    res.json({ data: documents, count: documents.length });
   } catch (error) {
     console.error('Document retrieval error:', error);
     res.status(500).json({ error: 'Failed to retrieve documents' });

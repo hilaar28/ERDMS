@@ -1,9 +1,11 @@
 import express from 'express';
 import { initializeIndexTables, indexDocument, searchDocuments, addTag, getTags, searchByTag } from '../models/indexing.js';
+import { requireAuth, requirePermission } from '../middleware/auth.js';
+import { isUserAdmin } from '../middleware/authorization.js';
 
 const router = express.Router();
 
-router.post('/initialize', async (req, res) => {
+router.post('/initialize', requireAuth, requirePermission('document:register'), async (req, res) => {
   try {
     await initializeIndexTables();
     res.json({ status: 'Index tables initialized' });
@@ -13,7 +15,7 @@ router.post('/initialize', async (req, res) => {
   }
 });
 
-router.post('/index/:documentId', async (req, res) => {
+router.post('/index/:documentId', requireAuth, requirePermission('document:register'), async (req, res) => {
   const { documentId } = req.params;
   try {
     await indexDocument(parseInt(documentId));
@@ -23,20 +25,22 @@ router.post('/index/:documentId', async (req, res) => {
   }
 });
 
-router.get('/search', async (req, res) => {
+router.get('/search', requireAuth, requirePermission('document:search'), async (req, res) => {
   const { q } = req.query;
   if (!q) {
     return res.status(400).json({ error: 'Search query parameter "q" is required' });
   }
   try {
-    const results = await searchDocuments(q);
-    res.json({ data: results });
+    const isAdmin = await isUserAdmin(req.user.id);
+    const userId = isAdmin ? null : req.user.id;
+    const results = await searchDocuments(q, userId);
+    res.json({ data: results, count: results.length });
   } catch (error) {
     res.status(500).json({ error: 'Search failed' });
   }
 });
 
-router.post('/tags/:documentId', async (req, res) => {
+router.post('/tags/:documentId', requireAuth, requirePermission('document:update'), async (req, res) => {
   const { documentId } = req.params;
   const { tag } = req.body;
   if (!tag) {
@@ -50,7 +54,7 @@ router.post('/tags/:documentId', async (req, res) => {
   }
 });
 
-router.get('/tags/:documentId', async (req, res) => {
+router.get('/tags/:documentId', requireAuth, requirePermission('document:search'), async (req, res) => {
   const { documentId } = req.params;
   try {
     const tags = await getTags(parseInt(documentId));
@@ -60,14 +64,16 @@ router.get('/tags/:documentId', async (req, res) => {
   }
 });
 
-router.get('/search/tags', async (req, res) => {
+router.get('/search/tags', requireAuth, requirePermission('document:search'), async (req, res) => {
   const { q } = req.query;
   if (!q) {
     return res.status(400).json({ error: 'Search query parameter "q" is required' });
   }
   try {
-    const results = await searchByTag(q);
-    res.json({ data: results });
+    const isAdmin = await isUserAdmin(req.user.id);
+    const userId = isAdmin ? null : req.user.id;
+    const results = await searchByTag(q, userId);
+    res.json({ data: results, count: results.length });
   } catch (error) {
     res.status(500).json({ error: 'Tag search failed' });
   }

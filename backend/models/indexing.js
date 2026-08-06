@@ -69,16 +69,24 @@ export async function indexDocument(documentId) {
   }
 }
 
-export async function searchDocuments(query) {
+export async function searchDocuments(query, userId = null) {
   try {
-    const result = await pool.query(`
+    let sql = `
       SELECT d.*, ts_rank(sv.content_ts, query) AS rank
       FROM documents d
       JOIN search_vector_store sv ON d.id = sv.document_id
       JOIN to_tsquery('english', $1) query ON sv.content_ts @@ query
-      ORDER BY rank DESC
-    `, [query]);
+    `;
+    const params = [query];
 
+    if (userId !== null) {
+      sql += ` WHERE d.created_by = $2`;
+      params.push(userId);
+    }
+
+    sql += ` ORDER BY rank DESC`;
+
+    const result = await pool.query(sql, params);
     return result.rows;
   } catch (err) {
     console.error('Search error:', err);
@@ -111,16 +119,24 @@ export async function getTags(documentId) {
   }
 }
 
-export async function searchByTag(tagPattern) {
+export async function searchByTag(tagPattern, userId = null) {
   try {
-    const result = await pool.query(`
+    let sql = `
       SELECT d.*, dt.tag
       FROM documents d
       JOIN document_tags dt ON d.id = dt.document_id
       WHERE dt.tag ILIKE $1
-      ORDER BY d.created_at DESC
-    `, [`%${tagPattern}%`]);
+    `;
+    const params = [`%${tagPattern}%`];
 
+    if (userId !== null) {
+      sql += ` AND d.created_by = $2`;
+      params.push(userId);
+    }
+
+    sql += ` ORDER BY d.created_at DESC`;
+
+    const result = await pool.query(sql, params);
     return result.rows;
   } catch (err) {
     console.error('Tag search error:', err);
