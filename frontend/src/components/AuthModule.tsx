@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { getAuthHeaders, getRefreshToken } from '../utils/auth';
 
 interface AuthModuleProps {
   API_URL: string;
@@ -45,11 +46,6 @@ const AuthModule: React.FC<AuthModuleProps> = ({ API_URL }) => {
     fetchUsers();
     fetchRoles();
   }, []);
-
-  const getAuthHeaders = () => {
-    const token = localStorage.getItem('token');
-    return token ? { 'Authorization': `Bearer ${token}` } : {};
-  };
 
   const fetchUsers = async () => {
     try {

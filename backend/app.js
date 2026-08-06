@@ -11,6 +11,7 @@ import { initializeRetentionTables } from './models/retention.js';
 import { initializeImmutableAudit } from './models/auditTrail.js';
 import { initializeTaskTables } from './models/tasks.js';
 import { initializeJwtSecret } from './middleware/auth.js';
+import { generalRateLimiter } from './middleware/rateLimit.js';
 import indexRouter from './routes/index.js';
 import authRouter from './routes/auth.js';
 import cmsRouter from './routes/cms-gateway.js';
@@ -35,6 +36,9 @@ app.use(cors({
 }));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
+// General rate limiting — protects all routes from abuse
+app.use(generalRateLimiter);
 
 // Routes
 app.use('/api/ingestion', ingestionRouter);

@@ -108,7 +108,18 @@ export function generateToken(user) {
   return jwt.sign(
     { userId: user.id, username: user.username },
     JWT_SECRET,
-    { expiresIn: '24h' }
+    { expiresIn: '15m' }
+  );
+}
+
+export function generateRefreshToken(user) {
+  if (!JWT_SECRET) {
+    throw new Error('JWT secret not initialized. Cannot generate token.');
+  }
+  return jwt.sign(
+    { userId: user.id, username: user.username },
+    JWT_SECRET,
+    { expiresIn: '7d' }
   );
 }
 
@@ -131,12 +142,21 @@ export async function requireAuth(req, res, next) {
       return res.status(401).json({ error: 'Invalid token' });
     }
 
+    // Verify that an active session exists in the database.
+    // This ensures that tokens can be revoked by invalidating the session,
+    // even if the JWT itself hasn't expired yet.
+    const session = await getSession(token);
+    if (!session) {
+      return res.status(401).json({ error: 'No active session. Please log in again.' });
+    }
+
     const user = await getUserById(decoded.userId);
     if (!user || !user.is_active) {
       return res.status(401).json({ error: 'User not found or inactive' });
     }
 
     req.user = user;
+    req.session = session;
     next();
   } catch (err) {
     console.error('Auth middleware error:', err);

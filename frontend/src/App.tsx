@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import LoginPage from './components/LoginPage';
 import Dashboard from './components/Dashboard';
+import { clearTokens, getToken } from './utils/auth';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api/documents';
 
@@ -9,14 +10,14 @@ const App: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   const handleLogout = useCallback(() => {
-    const token = localStorage.getItem('token');
+    const token = getToken();
     if (token) {
       fetch(`${API_URL.replace('/documents', '/auth')}/logout`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       }).catch(() => {});
     }
-    localStorage.removeItem('token');
+    clearTokens();
     setIsAuthenticated(false);
   }, []);
 
@@ -25,7 +26,7 @@ const App: React.FC = () => {
   };
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
+    const token = getToken();
     if (token) {
       setIsAuthenticated(true);
     }
@@ -35,7 +36,7 @@ const App: React.FC = () => {
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (isAuthenticated) {
-        const token = localStorage.getItem('token');
+        const token = getToken();
         if (token) {
           navigator.sendBeacon(
             `${API_URL.replace('/documents', '/auth')}/logout`,
@@ -48,7 +49,7 @@ const App: React.FC = () => {
             new Blob([], { type: 'application/json' })
           );
         }
-        localStorage.removeItem('token');
+        clearTokens();
       }
     };
 

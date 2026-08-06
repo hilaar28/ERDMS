@@ -25,7 +25,8 @@ import {
   assignPermissionToRole,
   removePermissionFromRole
 } from '../models/rbac.js';
-import { generateToken, requireAuth, requirePermission, requireRole, rotateJwtSecret, getJwtSecret, getPreviousJwtSecret } from '../middleware/auth.js';
+import { generateToken, generateRefreshToken, verifyToken, requireAuth, requirePermission, requireRole, rotateJwtSecret, getJwtSecret, getPreviousJwtSecret } from '../middleware/auth.js';
+import { loginRateLimiter, progressiveDelay, recordFailedLogin, clearFailedLogins, getClientIp } from '../middleware/rateLimit.js';
 import { createAuditLog } from '../models/versions.js';
 
 const router = express.Router();
@@ -64,8 +65,9 @@ router.post('/register', async (req, res) => {
   }
 });
 
-router.post('/login', async (req, res) => {
+router.post('/login', loginRateLimiter, progressiveDelay, async (req, res) => {
   const { username, password } = req.body;
+  const clientIp = getClientIp(req);
 
   if (!username || !password) {
     return res.status(400).json({ error: 'Username and password are required' });
@@ -75,6 +77,7 @@ router.post('/login', async (req, res) => {
     const user = await getUserByUsername(username);
 
     if (!user) {
+      recordFailedLogin(username, clientIp);
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
@@ -82,16 +85,24 @@ router.post('/login', async (req, res) => {
     const isValid = await verifyPassword(password, userWithHash.password_hash);
 
     if (!isValid) {
+      recordFailedLogin(username, clientIp);
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    const token = generateToken(user);
+    clearFailedLogins(username);
 
-    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    const token = generateToken(user);
+    const refreshToken = generateRefreshToken(user);
+
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
     await createSession(user.id, token, expiresAt);
+
+    const refreshExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    await createSession(user.id, refreshToken, refreshExpiresAt);
 
     return res.json({
       token,
+      refreshToken,
       user: {
         id: user.id,
         username: user.username,
@@ -102,6 +113,42 @@ router.post('/login', async (req, res) => {
   } catch (err) {
     console.error('Login error:', err);
     return res.status(500).json({ error: 'Login failed' });
+  }
+});
+
+router.post('/refresh', async (req, res) => {
+  const { refreshToken } = req.body;
+  if (!refreshToken) {
+    return res.status(400).json({ error: 'Refresh token is required' });
+  }
+
+  try {
+    const decoded = verifyToken(refreshToken);
+
+    // Check that a session exists for this refresh token
+    const session = await getSession(refreshToken);
+    if (!session) {
+      return res.status(401).json({ error: 'Invalid or expired session' });
+    }
+
+    const user = await getUserById(decoded.userId);
+    if (!user || !user.is_active) {
+      return res.status(401).json({ error: 'User not found or inactive' });
+    }
+
+    // Invalidate old session and create new one
+    await invalidateSession(refreshToken);
+    const newToken = generateToken(user);
+    const newExpiresAt = new Date(Date.now() + 15 * 60 * 1000);
+    await createSession(user.id, newToken, newExpiresAt);
+
+    return res.json({ token: newToken });
+  } catch (err) {
+    if (err.name === 'TokenExpiredError') {
+      return res.status(401).json({ error: 'Refresh token expired' });
+    }
+    console.error('Token refresh error:', err);
+    return res.status(401).json({ error: 'Invalid refresh token' });
   }
 });
 

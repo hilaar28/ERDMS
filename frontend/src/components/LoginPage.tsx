@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { setTokens } from '../utils/auth';
 
 interface LoginPageProps {
   API_URL: string;
@@ -32,7 +33,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ API_URL, onLoginSuccess }) => {
       const data = await response.json();
 
       if (response.ok && data.token) {
-        localStorage.setItem('token', data.token);
+        setTokens(data.token, data.refreshToken || data.token);
         setMessage({ type: 'success', text: 'Login successful! Redirecting...' });
         setTimeout(() => onLoginSuccess(), 1500);
       } else {

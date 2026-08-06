@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { getAuthHeaders, getRefreshToken, getToken, clearTokens } from '../utils/auth';
 
 interface Task {
   id: number;
@@ -60,13 +61,8 @@ const TaskAssignment: React.FC<TaskAssignmentProps> = ({ API_URL }) => {
 
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
 
-  const getAuthHeaders = () => {
-    const token = localStorage.getItem('token');
-    return token ? { 'Authorization': `Bearer ${token}` } : {};
-  };
-
   const getCurrentUser = async () => {
-    const token = localStorage.getItem('token');
+    const token = getToken();
     if (!token) return;
     try {
       const response = await fetch(`${authUrl}/me`, { headers: { 'Authorization': `Bearer ${token}` } });

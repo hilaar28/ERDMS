@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { getToken, getAuthHeaders, clearTokens } from '../utils/auth';
 import DocumentList from './DocumentList';
 import DocumentRegistration from './DocumentRegistration';
 import AuthModule from './AuthModule';
@@ -39,7 +40,7 @@ const Dashboard: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
   }, []);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
+    const token = getToken();
     if (token) {
       setUser({ token });
     }
@@ -49,11 +50,11 @@ const Dashboard: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
   }, []);
 
   const fetchUnreadCount = async () => {
-    const token = localStorage.getItem('token');
+    const token = getToken();
     if (!token) return;
     try {
       const response = await fetch(`${API_URL.replace('/documents', '/tasks')}/me/notifications/unread/count`, {
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: getAuthHeaders()
       });
       if (response.ok) {
         const data = await response.json();
@@ -65,11 +66,11 @@ const Dashboard: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
   };
 
   const fetchRecentNotifications = async () => {
-    const token = localStorage.getItem('token');
+    const token = getToken();
     if (!token) return;
     try {
       const response = await fetch(`${API_URL.replace('/documents', '/tasks')}/me/notifications?limit=5&unread=true`, {
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: getAuthHeaders()
       });
       if (response.ok) {
         const data = await response.json();
@@ -81,12 +82,12 @@ const Dashboard: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
   };
 
   const handleMarkAllRead = async () => {
-    const token = localStorage.getItem('token');
+    const token = getToken();
     if (!token) return;
     try {
       await fetch(`${API_URL.replace('/documents', '/tasks')}/me/notifications/read`, {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: getAuthHeaders()
       });
       setRecentNotifications([]);
       setUnreadCount(0);
@@ -254,7 +255,7 @@ const Dashboard: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
                 width: '100%',
                 padding: '0.75rem',
                 margin: '0.25rem 0',
-                backgroundColor: activeModule === item.id ? '#3498db' : 'transparent',
+                backgroundColor: activeModule === item.id ? '#6f42c1' : 'transparent',
                 color: 'white',
                 border: 'none',
                 borderRadius: '4px',
