@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import DocumentList from './DocumentList';
+import { getAuthHeaders } from '../utils/auth';
 
     const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api/documents';
 
@@ -14,7 +15,7 @@ const RegistrationForm: React.FC = () => {
 
   const fetchDocuments = async () => {
     try {
-      const response = await fetch(`${API_URL}/documents`);
+      const response = await fetch(`${API_URL}/documents`, { headers: getAuthHeaders() });
       if (response.ok) {
         const data = await response.json();
         setDocuments(data.data || []);
@@ -55,9 +56,16 @@ const handleSubmit = async (e: React.FormEvent) => {
         province: province.trim()
       }));
 
+      const headers = new Headers();
+      const authHeaders = getAuthHeaders();
+      if (authHeaders.Authorization) {
+        headers.set('Authorization', authHeaders.Authorization);
+      }
+
       const response = await fetch(`${API_URL}/upload`, {
         method: 'POST',
-        body: formData
+        body: formData,
+        headers
       });
 
       let responseBody: any = null;

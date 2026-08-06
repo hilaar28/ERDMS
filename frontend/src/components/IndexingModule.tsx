@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { getAuthHeaders, apiFetch } from '../utils/auth';
 
 interface IndexingModuleProps {
   API_URL: string;
@@ -19,7 +20,7 @@ const IndexingModule: React.FC<IndexingModuleProps> = ({ API_URL }) => {
 
   const fetchDocuments = async () => {
     try {
-      const response = await fetch(`${API_URL}/documents`);
+      const response = await apiFetch(`${API_URL}/documents`);
       if (response.ok) {
         const data = await response.json();
         setDocuments(data.data || []);
@@ -35,7 +36,7 @@ const IndexingModule: React.FC<IndexingModuleProps> = ({ API_URL }) => {
 
     setLoading(true);
     try {
-      const response = await fetch(`${API_URL.replace('/documents', '/index')}/search?q=${encodeURIComponent(searchQuery)}`);
+      const response = await fetch(`${API_URL.replace('/documents', '/index')}/search?q=${encodeURIComponent(searchQuery)}`, { headers: getAuthHeaders() });
       if (response.ok) {
         const data = await response.json();
         setSearchResults(data.data || []);
@@ -53,7 +54,7 @@ const IndexingModule: React.FC<IndexingModuleProps> = ({ API_URL }) => {
 
     setLoading(true);
     try {
-      const response = await fetch(`${API_URL.replace('/documents', '/index')}/search/tags?q=${encodeURIComponent(tagQuery)}`);
+      const response = await fetch(`${API_URL.replace('/documents', '/index')}/search/tags?q=${encodeURIComponent(tagQuery)}`, { headers: getAuthHeaders() });
       if (response.ok) {
         const data = await response.json();
         setSearchResults(data.data || []);
@@ -71,7 +72,10 @@ const IndexingModule: React.FC<IndexingModuleProps> = ({ API_URL }) => {
     try {
       const response = await fetch(`${API_URL.replace('/documents', '/index')}/tags/${docId}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders()
+        },
         body: JSON.stringify({ tag: newTag })
       });
 

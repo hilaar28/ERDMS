@@ -101,7 +101,7 @@ const TaskAssignment: React.FC<TaskAssignmentProps> = ({ API_URL }) => {
 
   const fetchDocuments = async () => {
     try {
-      const response = await fetch(`${API_URL}/documents`);
+      const response = await fetch(`${API_URL}/documents`, { headers: getAuthHeaders() });
       if (response.ok) {
         const data = await response.json();
         setDocuments(data.data || []);

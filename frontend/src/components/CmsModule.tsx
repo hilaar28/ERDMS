@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { getAuthHeaders } from '../utils/auth';
 
 interface CmsModuleProps {
   API_URL: string;
@@ -19,7 +20,7 @@ const CmsModule: React.FC<CmsModuleProps> = ({ API_URL }) => {
     setMessage({ type: '', text: '' });
 
     try {
-      const response = await fetch(`${API_URL.replace('/documents', '/index')}/search?q=${encodeURIComponent(caseId)}`);
+      const response = await fetch(`${API_URL.replace('/documents', '/index')}/search?q=${encodeURIComponent(caseId)}`, { headers: getAuthHeaders() });
       if (response.ok) {
         const data = await response.json();
         setCaseData(data.data?.[0] || null);
@@ -39,7 +40,7 @@ const CmsModule: React.FC<CmsModuleProps> = ({ API_URL }) => {
     if (!caseId.trim()) return;
 
     try {
-      const response = await fetch(`${API_URL.replace('/documents', '/cms')}/cases/${caseId}/documents`);
+      const response = await fetch(`${API_URL.replace('/documents', '/cms')}/cases/${caseId}/documents`, { headers: getAuthHeaders() });
       if (response.ok) {
         const data = await response.json();
         setLinkedDocuments(data.data || []);
@@ -60,7 +61,8 @@ const CmsModule: React.FC<CmsModuleProps> = ({ API_URL }) => {
 
     try {
       const response = await fetch(`${API_URL.replace('/documents', '/cms')}/cases/${caseId}/sync`, {
-        method: 'POST'
+        method: 'POST',
+        headers: getAuthHeaders()
       });
 
       if (response.ok) {
@@ -87,7 +89,10 @@ const CmsModule: React.FC<CmsModuleProps> = ({ API_URL }) => {
     try {
       const response = await fetch(`${API_URL.replace('/documents', '/cms')}/cases/${caseId}/documents`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders()
+        },
         body: JSON.stringify({ documentName })
       });
 
