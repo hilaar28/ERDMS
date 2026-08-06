@@ -41,6 +41,7 @@ const TaskAssignment: React.FC<TaskAssignmentProps> = ({ API_URL }) => {
   const [message, setMessage] = useState<{ type: string; text: string }>({ type: '', text: '' });
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [showAssignForm, setShowAssignForm] = useState(false);
+  const [viewMode, setViewMode] = useState<'all' | 'my'>('all');
 
   const [taskForm, setTaskForm] = useState({
     title: '',
@@ -165,7 +166,7 @@ const TaskAssignment: React.FC<TaskAssignmentProps> = ({ API_URL }) => {
         setMessage({ type: 'success', text: 'Task created successfully' });
         setTaskForm({ title: '', description: '', documentId: '', assignedTo: '', priority: 'normal', dueDate: '' });
         setShowCreateForm(false);
-        fetchTasks();
+        viewMode === 'my' ? fetchMyTasks() : fetchTasks();
       } else {
         setMessage({ type: 'error', text: data.error || 'Failed to create task' });
       }
@@ -199,7 +200,7 @@ const TaskAssignment: React.FC<TaskAssignmentProps> = ({ API_URL }) => {
         setMessage({ type: 'success', text: 'User assigned to task' });
         setAssignForm({ taskId: '', userId: '', roleInTask: '' });
         setShowAssignForm(false);
-        fetchTasks();
+        viewMode === 'my' ? fetchMyTasks() : fetchTasks();
       } else {
         setMessage({ type: 'error', text: data.error || 'Failed to assign user' });
       }
@@ -220,22 +221,13 @@ const TaskAssignment: React.FC<TaskAssignmentProps> = ({ API_URL }) => {
         },
         body: JSON.stringify({ status })
       });
-      fetchTasks();
+      if (viewMode === 'my') {
+        fetchMyTasks();
+      } else {
+        fetchTasks();
+      }
     } catch (error) {
       console.error('Error updating task status:', error);
-    }
-  };
-
-  const handleDeleteTask = async (taskId: number) => {
-    if (!window.confirm('Delete this task?')) return;
-    try {
-      await fetch(`${tasksUrl}/tasks/${taskId}`, {
-        method: 'DELETE',
-        headers: getAuthHeaders()
-      });
-      fetchTasks();
-    } catch (error) {
-      console.error('Error deleting task:', error);
     }
   };
 
@@ -258,13 +250,13 @@ const TaskAssignment: React.FC<TaskAssignmentProps> = ({ API_URL }) => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
         <div style={{ display: 'flex', gap: '0.5rem' }}>
           <button
-            onClick={() => { fetchTasks(); setShowCreateForm(false); setShowAssignForm(false); }}
+            onClick={() => { setViewMode('all'); fetchTasks(); setShowCreateForm(false); setShowAssignForm(false); }}
             style={{ padding: '0.5rem 1rem', backgroundColor: '#6f42c1', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
           >
             All Tasks
           </button>
           <button
-            onClick={() => { fetchMyTasks(); setShowCreateForm(false); setShowAssignForm(false); }}
+            onClick={() => { setViewMode('my'); fetchMyTasks(); setShowCreateForm(false); setShowAssignForm(false); }}
             style={{ padding: '0.5rem 1rem', backgroundColor: '#fd7e14', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
           >
             My Tasks

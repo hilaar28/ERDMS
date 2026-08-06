@@ -182,7 +182,7 @@ export async function getTasks(filters = {}) {
   if (filters.assignedTo) {
     paramCount++;
     params.push(filters.assignedTo);
-    query += ` AND t.assigned_to = $${paramCount}`;
+    query += ` AND (t.assigned_to = $${paramCount} OR EXISTS (SELECT 1 FROM task_assignments ta WHERE ta.task_id = t.id AND ta.user_id = $${paramCount}))`;
   }
 
   if (filters.assignedBy) {
@@ -246,9 +246,9 @@ export async function updateTaskStatus(taskId, status, userId) {
 
     const result = await client.query(
       `UPDATE tasks SET status = $1, updated_at = CURRENT_TIMESTAMP,
-       completed_at = $2
-      WHERE id = $3 RETURNING *`,
-      [status, status === 'completed' ? 'CURRENT_TIMESTAMP' : null, taskId]
+       completed_at = ${status === 'completed' ? 'CURRENT_TIMESTAMP' : 'NULL'}
+       WHERE id = $2 RETURNING *`,
+      [status, taskId]
     );
 
     if (status === 'completed') {
