@@ -17,7 +17,7 @@ interface DocumentListProps {
   showType?: boolean;
 }
 
-const DocumentList: React.FC<DocumentListProps> = ({ documents, onAction, showType = true }) => {
+const DocumentList: React.FC<DocumentListProps> = ({ documents, onAction, onOpen, showType = true }) => {
   return (
     <div>
       <h2>Registered Documents</h2>

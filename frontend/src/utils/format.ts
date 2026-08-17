@@ -11,7 +11,6 @@ const MIME_TYPE_LABELS: Record<string, string> = {
   'application/vnd.ms-powerpoint': 'PowerPoint',
   'application/vnd.ms-powerpoint.presentation.macroEnabled.12': 'PowerPoint',
   'application/vnd.ms-word.document.macroEnabled.12': 'Word',
-  'application/vnd.ms-excel': 'Excel',
   'application/vnd.openxmlformats-package.xps': 'XPS',
   'application/rtf': 'RTF',
   'text/plain': 'Text',
