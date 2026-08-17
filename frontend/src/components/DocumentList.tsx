@@ -13,6 +13,7 @@ interface Document {
 interface DocumentListProps {
   documents: Document[];
   onAction?: (documentId: number, action: 'history' | 'collab') => void;
+  onOpen?: (documentId: number) => void;
   showType?: boolean;
 }
 
@@ -31,9 +32,12 @@ const DocumentList: React.FC<DocumentListProps> = ({ documents, onAction, showTy
               <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '2px solid #ddd' }}>Type</th>
             )}
             <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '2px solid #ddd' }}>Created</th>
-            {onAction && (
-              <th style={{ padding: '0.75rem', textAlign: 'center', borderBottom: '2px solid #ddd' }}>Actions</th>
-            )}
+             {onAction && (
+                <th style={{ padding: '0.75rem', textAlign: 'center', borderBottom: '2px solid #ddd' }}>Actions</th>
+              )}
+              {onOpen && (
+                <th style={{ padding: '0.75rem', textAlign: 'center', borderBottom: '2px solid #ddd' }}>View</th>
+              )}
           </tr>
         </thead>
         <tbody>
@@ -82,12 +86,31 @@ const DocumentList: React.FC<DocumentListProps> = ({ documents, onAction, showTy
                   </button>
                 </td>
               )}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      {documents.length === 0 && <p style={{ textAlign: 'center', color: '#666', marginTop: '2rem' }}>No documents registered yet</p>}
-    </div>
+              {onOpen && (
+                <td style={{ padding: '0.75rem', textAlign: 'center', whiteSpace: 'nowrap' }}>
+                    <button
+                      onClick={() => onOpen(doc.id)}
+                      style={{
+                        padding: '0.3rem 0.6rem',
+                        backgroundColor: '#28a745',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        fontSize: '0.8rem'
+                      }}
+                      title="Open document"
+                    >
+                      Open
+                    </button>
+                  </td>
+                )}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {documents.length === 0 && <p style={{ textAlign: 'center', color: '#666', marginTop: '2rem' }}>No documents registered yet</p>}
+      </div>
   );
 };
 

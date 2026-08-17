@@ -105,9 +105,32 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId, API_URL, on
     }
   };
 
-  const handleViewDocument = () => {
-    if (document?.bucketUrl) {
-      window.open(document.bucketUrl, '_blank');
+  const handleViewDocument = async () => {
+    const token = localStorage.getItem('token');
+    const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+    
+    // Determine if we can preview inline (images, PDFs, text documents)
+    const previewableTypes = ['image/', 'application/pdf', 'text/', 'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation'];
+    const isPreviewable = document.mime_type && previewableTypes.some(t => document.mime_type.startsWith(t) || document.mime_type === t);
+    
+    const endpoint = isPreviewable ? 'view' : 'download';
+    
+    try {
+      const response = await fetch(`${API_URL}/documents/${documentId}/${endpoint}`, { headers });
+      if (!response.ok) {
+        setMessage({ type: 'error', text: 'Failed to fetch document' });
+        return;
+      }
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      window.open(blobUrl, '_blank');
+      // Clean up blob URL after it's been opened
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 30000);
+    } catch (error) {
+      setMessage({ type: 'error', text: 'Failed to open document' });
     }
   };
 

@@ -1,6 +1,8 @@
 import express from 'express';
 import multer from 'multer';
 import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
 import pool from '../db.js';
 import { validateFile } from '../utils/fileValidation.js';
 import { createVersion, createAuditLog } from '../models/versions.js';
@@ -225,6 +227,88 @@ router.post('/', requireAuth, requirePermission('document:register'), async (req
   } catch (error) {
     console.error('Document creation error:', error);
     res.status(500).json({ error: 'Document creation failed' });
+  }
+});
+
+// Download a document file (forces download)
+router.get('/documents/:id/download', requireAuth, requireDocumentAccess, async (req, res) => {
+  try {
+    const docId = parseInt(req.params.id);
+    const result = await pool.query(
+      'SELECT original_filename, file_path, stored_filename, mime_type, file_size, bucket_name FROM documents WHERE id = $1',
+      [docId]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: 'Document not found' });
+    }
+
+    const doc = result.rows[0];
+    let filePath = doc.file_path;
+
+    // Fall back to uploads/ if file_path not set
+    if (!filePath && doc.stored_filename) {
+      filePath = path.join(process.cwd(), 'uploads', doc.stored_filename);
+    }
+
+    if (!filePath || !fs.existsSync(filePath)) {
+      return res.status(404).json({ error: 'File not found on storage' });
+    }
+
+    const filename = doc.original_filename || doc.stored_filename || `document_${docId}`;
+    const mimeType = doc.mime_type || 'application/octet-stream';
+
+    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(filename)}"`);
+    res.setHeader('Content-Type', mimeType);
+    if (doc.file_size) {
+      res.setHeader('Content-Length', doc.file_size);
+    }
+
+    const stream = fs.createReadStream(filePath);
+    stream.pipe(res);
+  } catch (error) {
+    console.error('Document download error:', error);
+    res.status(500).json({ error: 'Failed to download document' });
+  }
+});
+
+// View a document inline (displays in browser)
+router.get('/documents/:id/view', requireAuth, requireDocumentAccess, async (req, res) => {
+  try {
+    const docId = parseInt(req.params.id);
+    const result = await pool.query(
+      'SELECT original_filename, file_path, stored_filename, mime_type, file_size, bucket_name FROM documents WHERE id = $1',
+      [docId]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: 'Document not found' });
+    }
+
+    const doc = result.rows[0];
+    let filePath = doc.file_path;
+
+    if (!filePath && doc.stored_filename) {
+      filePath = path.join(process.cwd(), 'uploads', doc.stored_filename);
+    }
+
+    if (!filePath || !fs.existsSync(filePath)) {
+      return res.status(404).json({ error: 'File not found on storage' });
+    }
+
+    const mimeType = doc.mime_type || 'application/octet-stream';
+
+    res.setHeader('Content-Disposition', 'inline');
+    res.setHeader('Content-Type', mimeType);
+    if (doc.file_size) {
+      res.setHeader('Content-Length', doc.file_size);
+    }
+
+    const stream = fs.createReadStream(filePath);
+    stream.pipe(res);
+  } catch (error) {
+    console.error('Document view error:', error);
+    res.status(500).json({ error: 'Failed to view document' });
   }
 });
 

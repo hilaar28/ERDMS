@@ -94,7 +94,7 @@ router.post('/login', loginRateLimiter, progressiveDelay, async (req, res) => {
     const token = generateToken(user);
     const refreshToken = generateRefreshToken(user);
 
-    const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
     await createSession(user.id, token, expiresAt);
 
     const refreshExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
@@ -139,7 +139,7 @@ router.post('/refresh', async (req, res) => {
     // Invalidate old session and create new one
     await invalidateSession(refreshToken);
     const newToken = generateToken(user);
-    const newExpiresAt = new Date(Date.now() + 15 * 60 * 1000);
+    const newExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
     await createSession(user.id, newToken, newExpiresAt);
 
     return res.json({ token: newToken });

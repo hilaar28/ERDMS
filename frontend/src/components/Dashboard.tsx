@@ -192,7 +192,7 @@ const Dashboard: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
               View version history and audit logs for all documents.
             </p>
             {documents.length > 0 ? (
-              <DocumentList documents={documents} onAction={handleDocumentAction} showType={true} />
+              <DocumentList documents={documents} onAction={handleDocumentAction} showType={true} onOpen={(id) => setViewingDocumentId(id)} />
             ) : (
               <div style={{ padding: '1rem', backgroundColor: '#fff3cd', borderRadius: '4px' }}>
                 No documents found. Register documents first in the Document Registration module.
