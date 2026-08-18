@@ -18,6 +18,9 @@ export async function initIngestionSchema() {
         class VARCHAR(100),
         file_number VARCHAR(100),
         folio_number VARCHAR(100),
+        class_id INTEGER REFERENCES classes(id),
+        file_number_id INTEGER REFERENCES file_numbers(id),
+        folio_number_id INTEGER REFERENCES folio_numbers(id),
         department VARCHAR(100),
         province VARCHAR(100),
         created_by INTEGER REFERENCES users(id),
@@ -34,6 +37,9 @@ export async function initIngestionSchema() {
     await pool.query(`ALTER TABLE documents ADD COLUMN IF NOT EXISTS class VARCHAR(100)`);
     await pool.query(`ALTER TABLE documents ADD COLUMN IF NOT EXISTS file_number VARCHAR(100)`);
     await pool.query(`ALTER TABLE documents ADD COLUMN IF NOT EXISTS folio_number VARCHAR(100)`);
+    await pool.query(`ALTER TABLE documents ADD COLUMN IF NOT EXISTS class_id INTEGER REFERENCES classes(id)`);
+    await pool.query(`ALTER TABLE documents ADD COLUMN IF NOT EXISTS file_number_id INTEGER REFERENCES file_numbers(id)`);
+    await pool.query(`ALTER TABLE documents ADD COLUMN IF NOT EXISTS folio_number_id INTEGER REFERENCES folio_numbers(id)`);
 
     await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_docs_dept_prov

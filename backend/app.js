@@ -10,6 +10,7 @@ import { initializeVersioningTables } from './models/versions.js';
 import { initializeRetentionTables } from './models/retention.js';
 import { initializeImmutableAudit } from './models/auditTrail.js';
 import { initializeTaskTables } from './models/tasks.js';
+import { initClassificationSchema } from './models/classification.js';
 import { initializeJwtSecret } from './middleware/auth.js';
 import { generalRateLimiter } from './middleware/rateLimit.js';
 import indexRouter from './routes/index.js';
@@ -19,6 +20,7 @@ import versionsRouter from './routes/versions.js';
 import retentionRouter from './routes/retention.js';
 import auditTrailRouter from './routes/auditTrail.js';
 import tasksRouter from './routes/tasks.js';
+import classificationRouter from './routes/classification.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -50,6 +52,7 @@ app.use('/api/versioning', versionsRouter);
 app.use('/api/retention', retentionRouter);
 app.use('/api/audit', auditTrailRouter);
 app.use('/api/tasks', tasksRouter);
+app.use('/api/classification', classificationRouter);
 
 // Health check
 app.get('/health', (req, res) => {
@@ -59,8 +62,9 @@ app.get('/health', (req, res) => {
 // Initialize schema, then start listening. Starting the server before the
 // schema exists could let requests hit routes that query tables that
 // haven't been created yet.
-initIngestionSchema()
+initClassificationSchema()
   .then(async () => {
+    await initIngestionSchema();
     await initializeIndexTables();
     await initializeAuthTables();
     await initializeCmsTables();

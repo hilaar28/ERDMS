@@ -12,9 +12,15 @@ const DocumentRegistration: React.FC<DocumentRegistrationProps> = ({ API_URL }) 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [department, setDepartment] = useState('');
   const [province, setProvince] = useState('');
-  const [docClass, setDocClass] = useState('');
+  const [classId, setClassId] = useState<number | null>(null);
+  const [fileNumberId, setFileNumberId] = useState<number | null>(null);
+  const [folioNumberId, setFolioNumberId] = useState<number | null>(null);
+  const [className, setClassName] = useState('');
   const [fileNumber, setFileNumber] = useState('');
   const [folioNumber, setFolioNumber] = useState('');
+  const [classes, setClasses] = useState<{ id: number; name: string }[]>([]);
+  const [fileNumbers, setFileNumbers] = useState<{ id: number; file_number: string }[]>([]);
+  const [folioNumbers, setFolioNumbers] = useState<{ id: number; folio_number: string }[]>([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: string; text: string }>({ type: '', text: '' });
   const [documents, setDocuments] = useState<any[]>([]);
@@ -35,7 +41,66 @@ const DocumentRegistration: React.FC<DocumentRegistrationProps> = ({ API_URL }) 
 
   useEffect(() => {
     fetchDocuments();
+    fetchClasses();
   }, []);
+
+  const fetchClasses = async () => {
+    try {
+      const response = await fetch(`${API_URL.replace('/documents', '/classification')}/classes`, { headers: getAuthHeaders() });
+      if (response.ok) {
+        const data = await response.json();
+        setClasses(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch classes:', error);
+    }
+  };
+
+  const fetchFileNumbers = async (classId: number) => {
+    try {
+      const response = await fetch(`${API_URL.replace('/documents', '/classification')}/classes/${classId}/file-numbers`, { headers: getAuthHeaders() });
+      if (response.ok) {
+        const data = await response.json();
+        setFileNumbers(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch file numbers:', error);
+    }
+  };
+
+  const fetchFolioNumbers = async (fileNumberId: number) => {
+    try {
+      const response = await fetch(`${API_URL.replace('/documents', '/classification')}/file-numbers/${fileNumberId}/folio-numbers`, { headers: getAuthHeaders() });
+      if (response.ok) {
+        const data = await response.json();
+        setFolioNumbers(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch folio numbers:', error);
+    }
+  };
+
+  const handleClassChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const id = parseInt(e.target.value) || null;
+    setClassId(id);
+    setFileNumberId(null);
+    setFolioNumberId(null);
+    setFileNumbers([]);
+    setFolioNumbers([]);
+    if (id) {
+      fetchFileNumbers(id);
+    }
+  };
+
+  const handleFileNumberChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const id = parseInt(e.target.value) || null;
+    setFileNumberId(id);
+    setFolioNumberId(null);
+    setFolioNumbers([]);
+    if (id) {
+      fetchFolioNumbers(id);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,9 +125,12 @@ const DocumentRegistration: React.FC<DocumentRegistrationProps> = ({ API_URL }) 
         name: newDocName.trim(),
         department: department.trim(),
         province: province.trim(),
-        class: docClass.trim(),
-        fileNumber: fileNumber.trim(),
-        folioNumber: folioNumber.trim()
+        class: className,
+        fileNumber: fileNumber,
+        folioNumber: folioNumber,
+        classId: classId,
+        fileNumberId: fileNumberId,
+        folioNumberId: folioNumberId
       }));
 
       const headers = new Headers();
@@ -93,9 +161,14 @@ const DocumentRegistration: React.FC<DocumentRegistrationProps> = ({ API_URL }) 
       setSelectedFile(null);
       setDepartment('');
       setProvince('');
-      setDocClass('');
+      setClassId(null);
+      setFileNumberId(null);
+      setFolioNumberId(null);
+      setClassName('');
       setFileNumber('');
       setFolioNumber('');
+      setFileNumbers([]);
+      setFolioNumbers([]);
       fetchDocuments();
     } catch (error: unknown) {
       let text: string;
@@ -210,67 +283,76 @@ const DocumentRegistration: React.FC<DocumentRegistrationProps> = ({ API_URL }) 
              />
            </div>
 
-           <div style={{ marginBottom: '1rem' }}>
-             <label htmlFor="docClass" style={{ display: 'block', marginBottom: '0.5rem' }}>
-               Class
-             </label>
-             <input
-               id="docClass"
-               type="text"
-               value={docClass}
-               onChange={(e) => setDocClass(e.target.value)}
-               placeholder="Enter document class"
-               style={{
-                 width: '100%',
-                 padding: '0.75rem',
-                 border: '1px solid #ddd',
-                 borderRadius: '4px'
-               }}
-               disabled={loading}
-             />
-           </div>
+            <div style={{ marginBottom: '1rem' }}>
+              <label htmlFor="classId" style={{ display: 'block', marginBottom: '0.5rem' }}>
+                Class
+              </label>
+              <select
+                id="classId"
+                value={classId || ''}
+                onChange={handleClassChange}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  border: '1px solid #ddd',
+                  borderRadius: '4px'
+                }}
+                disabled={loading}
+              >
+                <option value="">-- Select Class --</option>
+                {classes.map((cls) => (
+                  <option key={cls.id} value={cls.id}>{cls.name}</option>
+                ))}
+              </select>
+            </div>
 
-           <div style={{ marginBottom: '1rem' }}>
-             <label htmlFor="fileNumber" style={{ display: 'block', marginBottom: '0.5rem' }}>
-               File Number
-             </label>
-             <input
-               id="fileNumber"
-               type="text"
-               value={fileNumber}
-               onChange={(e) => setFileNumber(e.target.value)}
-               placeholder="Enter file number"
-               style={{
-                 width: '100%',
-                 padding: '0.75rem',
-                 border: '1px solid #ddd',
-                 borderRadius: '4px'
-               }}
-               disabled={loading}
-             />
-           </div>
+            <div style={{ marginBottom: '1rem' }}>
+              <label htmlFor="fileNumberId" style={{ display: 'block', marginBottom: '0.5rem' }}>
+                File Number
+              </label>
+              <select
+                id="fileNumberId"
+                value={fileNumberId || ''}
+                onChange={handleFileNumberChange}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  border: '1px solid #ddd',
+                  borderRadius: '4px'
+                }}
+                disabled={loading || !classId}
+              >
+                <option value="">-- Select File Number --</option>
+                {fileNumbers.map((fn) => (
+                  <option key={fn.id} value={fn.id}>{fn.file_number}</option>
+                ))}
+              </select>
+            </div>
 
-           <div style={{ marginBottom: '1rem' }}>
-             <label htmlFor="folioNumber" style={{ display: 'block', marginBottom: '0.5rem' }}>
-               Folio Number
-             </label>
-             <input
-               id="folioNumber"
-               type="text"
-               value={folioNumber}
-               onChange={(e) => setFolioNumber(e.target.value)}
-               placeholder="Enter folio number"
-               style={{
-                 width: '100%',
-                 padding: '0.75rem',
-                 border: '1px solid #ddd',
-                 borderRadius: '4px'
-               }}
-               disabled={loading}
-             />
-           </div>
+            <div style={{ marginBottom: '1rem' }}>
+              <label htmlFor="folioNumberId" style={{ display: 'block', marginBottom: '0.5rem' }}>
+                Folio Number
+              </label>
+              <select
+                id="folioNumberId"
+                value={folioNumberId || ''}
+                onChange={(e) => setFolioNumberId(parseInt(e.target.value) || null)}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  border: '1px solid #ddd',
+                  borderRadius: '4px'
+                }}
+                disabled={loading || !fileNumberId}
+              >
+                <option value="">-- Select Folio Number --</option>
+                {folioNumbers.map((folio) => (
+                  <option key={folio.id} value={folio.id}>{folio.folio_number}</option>
+                ))}
+              </select>
+            </div>
 
-           <button
+            <button
             type="submit"
             disabled={loading || !newDocName.trim() || !selectedFile}
             style={{

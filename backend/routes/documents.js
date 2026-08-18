@@ -46,7 +46,7 @@ router.post('/upload', requireAuth, upload.single('document'), async (req, res) 
     }
 
     const result = await pool.query(
-      'INSERT INTO documents (name, original_filename, stored_filename, file_path, file_size, mime_type, bucket_name, department, province, class, file_number, folio_number, created_by, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP) RETURNING id',
+      'INSERT INTO documents (name, original_filename, stored_filename, file_path, file_size, mime_type, bucket_name, department, province, class, file_number, folio_number, class_id, file_number_id, folio_number_id, created_by, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP) RETURNING id',
       [
         metadata.name,
         file.originalname,
@@ -60,6 +60,9 @@ router.post('/upload', requireAuth, upload.single('document'), async (req, res) 
         metadata.class || '',
         metadata.fileNumber || '',
         metadata.folioNumber || '',
+        metadata.classId || null,
+        metadata.fileNumberId || null,
+        metadata.folioNumberId || null,
         req.user?.id || null
       ]
     );
@@ -125,7 +128,10 @@ router.post('/upload', requireAuth, upload.single('document'), async (req, res) 
         name: metadata.name,
         storedFilename: file.filename,
         department: metadata.department || '',
-        province: metadata.province || ''
+        province: metadata.province || '',
+        class: metadata.class || '',
+        fileNumber: metadata.fileNumber || '',
+        folioNumber: metadata.folioNumber || ''
       },
       version: 1
     });
