@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { getFriendlyTypeName } from '../utils/format';
+import mammoth from 'mammoth';
+import * as XLSX from 'xlsx';
 
 interface DocumentViewerProps {
   documentId: number;
@@ -36,6 +38,9 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId, API_URL, on
   const [message, setMessage] = useState<{ type: string; text: string }>({ type: '', text: '' });
   const [viewerBlobUrl, setViewerBlobUrl] = useState<string | null>(null);
   const [viewerError, setViewerError] = useState<string>('');
+  const [wordHtml, setWordHtml] = useState<string>('');
+  const [excelData, setExcelData] = useState<any>(null);
+  const [excelSheetName, setExcelSheetName] = useState<string>('');
 
   const versioningUrl = API_URL.replace('/documents', '/versioning');
 
@@ -118,8 +123,49 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId, API_URL, on
   const loadInlineViewer = async () => {
     setViewerError('');
     setViewerBlobUrl(null);
+    setWordHtml('');
+    setExcelData(null);
+    setExcelSheetName('');
 
     try {
+      if (document.mime_type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+        const response = await fetch(`${API_URL}/documents/${documentId}/view`, {
+          headers: getAuthHeaders()
+        });
+
+        if (!response.ok) {
+          setViewerError('Failed to load Word document');
+          return;
+        }
+
+        const blob = await response.blob();
+        const arrayBuffer = await blob.arrayBuffer();
+        const result = await mammoth.convertToHtml({ arrayBuffer });
+        setWordHtml(result.value);
+        return;
+      }
+
+      if (document.mime_type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
+          document.mime_type === 'application/vnd.ms-excel' ||
+          document.mime_type === 'application/vnd.ms-excel.sheet.macroEnabled.12') {
+        const response = await fetch(`${API_URL}/documents/${documentId}/view`, {
+          headers: getAuthHeaders()
+        });
+
+        if (!response.ok) {
+          setViewerError('Failed to load Excel document');
+          return;
+        }
+
+        const blob = await response.blob();
+        const arrayBuffer = await blob.arrayBuffer();
+        const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+        const firstSheet = workbook.SheetNames[0];
+        setExcelSheetName(firstSheet);
+        setExcelData(workbook);
+        return;
+      }
+
       const response = await fetch(`${API_URL}/documents/${documentId}/view`, {
         headers: getAuthHeaders()
       });
@@ -276,25 +322,64 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId, API_URL, on
                 <iframe src={viewerBlobUrl} width="100%" height="500px" style={{ border: 'none' }} />
               </object>
             )}
-            {document.mime_type && !document.mime_type.startsWith('image/') && document.mime_type !== 'application/pdf' && !document.mime_type.startsWith('text/') && document.mime_type !== 'application/json' && (
-              <div style={{ padding: '2rem', textAlign: 'center', backgroundColor: '#f8fafc' }}>
-                <p style={{ marginBottom: '1rem', color: '#666' }}>Inline preview is not available for this file type.</p>
+          </div>
+        )}
+
+        {wordHtml && (
+          <div style={{ marginTop: '1rem', border: '1px solid #ddd', borderRadius: '4px', overflow: 'auto', minHeight: '400px', padding: '1.5rem', backgroundColor: '#fff' }}>
+            <div dangerouslySetInnerHTML={{ __html: wordHtml }} />
+          </div>
+        )}
+
+        {excelData && (
+          <div style={{ marginTop: '1rem', border: '1px solid #ddd', borderRadius: '4px', overflow: 'auto', minHeight: '400px', backgroundColor: '#fff' }}>
+            <div style={{ padding: '0.5rem 1rem', borderBottom: '1px solid #ddd', backgroundColor: '#f8fafc', display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
+              <span style={{ fontWeight: 500, marginRight: '0.5rem' }}>Sheet:</span>
+              {excelData.SheetNames.map((name: string) => (
                 <button
-                  onClick={handleDownload}
+                  key={name}
+                  onClick={() => setExcelSheetName(name)}
                   style={{
-                    padding: '0.6rem 1.2rem',
-                    backgroundColor: '#6f42c1',
-                    color: 'white',
+                    padding: '0.3rem 0.75rem',
+                    backgroundColor: excelSheetName === name ? '#6f42c1' : '#e9ecef',
+                    color: excelSheetName === name ? 'white' : '#333',
                     border: 'none',
                     borderRadius: '4px',
                     cursor: 'pointer',
-                    fontSize: '0.9rem'
+                    fontSize: '0.85rem'
                   }}
                 >
-                  Download to View
+                  {name}
                 </button>
-              </div>
-            )}
+              ))}
+            </div>
+            <div style={{ padding: '1rem', overflowX: 'auto' }}>
+              {excelSheetName && (() => {
+                const worksheet = excelData.Sheets[excelSheetName];
+                const html = XLSX.utils.sheet_to_html(worksheet);
+                return <div dangerouslySetInnerHTML={{ __html: html }} />;
+              })()}
+            </div>
+          </div>
+        )}
+
+        {!viewerBlobUrl && !wordHtml && !excelData && (
+          <div style={{ padding: '2rem', textAlign: 'center', backgroundColor: '#f8fafc' }}>
+            <p style={{ marginBottom: '1rem', color: '#666' }}>Inline preview is not available for this file type.</p>
+            <button
+              onClick={handleDownload}
+              style={{
+                padding: '0.6rem 1.2rem',
+                backgroundColor: '#6f42c1',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '0.9rem'
+              }}
+            >
+              Download to View
+            </button>
           </div>
         )}
       </div>
