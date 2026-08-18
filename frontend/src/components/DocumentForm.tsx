@@ -21,6 +21,10 @@ const RegistrationForm: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: string; text: string }>({ type: '', text: '' });
   const [documents, setDocuments] = useState<any[]>([]);
+  const [showCreateClass, setShowCreateClass] = useState(false);
+  const [newClassName, setNewClassName] = useState('');
+  const [showCreateFileNumber, setShowCreateFileNumber] = useState(false);
+  const [newFileNumber, setNewFileNumber] = useState('');
 
   const fetchDocuments = async () => {
     try {
@@ -99,6 +103,46 @@ const RegistrationForm: React.FC = () => {
     }
   };
 
+  const handleCreateClass = async () => {
+    if (!newClassName.trim()) return;
+    try {
+      const response = await fetch(`${API_URL.replace('/documents', '/classification')}/classes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+        body: JSON.stringify({ name: newClassName.trim() })
+      });
+      if (response.ok) {
+        const cls = await response.json();
+        setClasses([...classes, cls]);
+        setClassId(cls.id);
+        setNewClassName('');
+        setShowCreateClass(false);
+      }
+    } catch (error) {
+      console.error('Failed to create class:', error);
+    }
+  };
+
+  const handleCreateFileNumber = async () => {
+    if (!newFileNumber.trim() || !classId) return;
+    try {
+      const response = await fetch(`${API_URL.replace('/documents', '/classification')}/classes/${classId}/file-numbers`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+        body: JSON.stringify({ fileNumber: newFileNumber.trim() })
+      });
+      if (response.ok) {
+        const fn = await response.json();
+        setFileNumbers([...fileNumbers, fn]);
+        setFileNumberId(fn.id);
+        setNewFileNumber('');
+        setShowCreateFileNumber(false);
+      }
+    } catch (error) {
+      console.error('Failed to create file number:', error);
+    }
+  };
+
 const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -166,6 +210,10 @@ const handleSubmit = async (e: React.FormEvent) => {
       setFolioNumber('');
       setFileNumbers([]);
       setFolioNumbers([]);
+      setShowCreateClass(false);
+      setShowCreateFileNumber(false);
+      setNewClassName('');
+      setNewFileNumber('');
       fetchDocuments();
     } catch (error: unknown) {
       let text: string;
@@ -302,7 +350,73 @@ return (
               <option key={cls.id} value={cls.id}>{cls.name}</option>
             ))}
           </select>
+          <button
+            type="button"
+            onClick={() => setShowCreateClass(!showCreateClass)}
+            style={{
+              marginLeft: '0.5rem',
+              padding: '0.5rem 0.75rem',
+              backgroundColor: '#28a745',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '0.85rem'
+            }}
+          >
+            +
+          </button>
         </div>
+        {showCreateClass && (
+          <div style={{ marginBottom: '1rem', padding: '1rem', backgroundColor: '#f8fafc', borderRadius: '4px' }}>
+            <label htmlFor="newClassName" style={{ display: 'block', marginBottom: '0.5rem' }}>
+              New Class Name
+            </label>
+            <input
+              id="newClassName"
+              type="text"
+              value={newClassName}
+              onChange={(e) => setNewClassName(e.target.value)}
+              placeholder="Enter new class name"
+              style={{
+                width: '100%',
+                padding: '0.75rem',
+                border: '1px solid #ddd',
+                borderRadius: '4px',
+                marginBottom: '0.5rem'
+              }}
+            />
+            <button
+              type="button"
+              onClick={handleCreateClass}
+              style={{
+                padding: '0.5rem 1rem',
+                backgroundColor: '#28a745',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                marginRight: '0.5rem'
+              }}
+            >
+              Create Class
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowCreateClass(false)}
+              style={{
+                padding: '0.5rem 1rem',
+                backgroundColor: '#6c757d',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer'
+              }}
+            >
+              Cancel
+            </button>
+          </div>
+        )}
 
         <div style={{ marginBottom: '1rem' }}>
           <label htmlFor="fileNumberId" style={{ display: 'block', marginBottom: '0.5rem' }}>
@@ -325,7 +439,74 @@ return (
               <option key={fn.id} value={fn.id}>{fn.file_number}</option>
             ))}
           </select>
+          <button
+            type="button"
+            onClick={() => setShowCreateFileNumber(!showCreateFileNumber)}
+            disabled={!classId}
+            style={{
+              marginLeft: '0.5rem',
+              padding: '0.5rem 0.75rem',
+              backgroundColor: classId ? '#28a745' : '#ccc',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: classId ? 'pointer' : 'not-allowed',
+              fontSize: '0.85rem'
+            }}
+          >
+            +
+          </button>
         </div>
+        {showCreateFileNumber && classId && (
+          <div style={{ marginBottom: '1rem', padding: '1rem', backgroundColor: '#f8fafc', borderRadius: '4px' }}>
+            <label htmlFor="newFileNumber" style={{ display: 'block', marginBottom: '0.5rem' }}>
+              New File Number
+            </label>
+            <input
+              id="newFileNumber"
+              type="text"
+              value={newFileNumber}
+              onChange={(e) => setNewFileNumber(e.target.value)}
+              placeholder="Enter new file number"
+              style={{
+                width: '100%',
+                padding: '0.75rem',
+                border: '1px solid #ddd',
+                borderRadius: '4px',
+                marginBottom: '0.5rem'
+              }}
+            />
+            <button
+              type="button"
+              onClick={handleCreateFileNumber}
+              style={{
+                padding: '0.5rem 1rem',
+                backgroundColor: '#28a745',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                marginRight: '0.5rem'
+              }}
+            >
+              Create File Number
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowCreateFileNumber(false)}
+              style={{
+                padding: '0.5rem 1rem',
+                backgroundColor: '#6c757d',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer'
+              }}
+            >
+              Cancel
+            </button>
+          </div>
+        )}
 
         <div style={{ marginBottom: '1rem' }}>
           <label htmlFor="folioNumberId" style={{ display: 'block', marginBottom: '0.5rem' }}>

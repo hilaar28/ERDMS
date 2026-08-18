@@ -15,7 +15,7 @@ router.get('/classes', requireAuth, async (req, res) => {
   }
 });
 
-router.post('/classes', requireAuth, requirePermission('system:manage'), async (req, res) => {
+router.post('/classes', requireAuth, async (req, res) => {
   try {
     const { name, description } = req.body;
     if (!name) {
@@ -40,7 +40,7 @@ router.get('/classes/:classId/file-numbers', requireAuth, async (req, res) => {
   }
 });
 
-router.post('/classes/:classId/file-numbers', requireAuth, requirePermission('system:manage'), async (req, res) => {
+router.post('/classes/:classId/file-numbers', requireAuth, async (req, res) => {
   try {
     const classId = parseInt(req.params.classId);
     const { fileNumber, description } = req.body;
@@ -66,7 +66,7 @@ router.get('/file-numbers/:fileNumberId/folio-numbers', requireAuth, async (req,
   }
 });
 
-router.post('/file-numbers/:fileNumberId/folio-numbers', requireAuth, requirePermission('system:manage'), async (req, res) => {
+router.post('/file-numbers/:fileNumberId/folio-numbers', requireAuth, async (req, res) => {
   try {
     const fileNumberId = parseInt(req.params.fileNumberId);
     const { folioNumber, description } = req.body;
