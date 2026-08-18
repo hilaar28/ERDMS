@@ -136,7 +136,7 @@ const DocumentRegistration: React.FC<DocumentRegistrationProps> = ({ API_URL }) 
             <input
               id="fileUpload"
               type="file"
-              accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.txt"
+              accept=".pdf,.doc,.docx,.xlsx,.xls,.xlsm,.jpg,.jpeg,.png,.txt"
               onChange={(e) => {
                 if (e.target.files && e.target.files[0]) {
                   setSelectedFile(e.target.files[0]);
