@@ -15,6 +15,9 @@ export async function initIngestionSchema() {
         bucket_name VARCHAR(255),
         category VARCHAR(100),
         source VARCHAR(50),
+        class VARCHAR(100),
+        file_number VARCHAR(100),
+        folio_number VARCHAR(100),
         department VARCHAR(100),
         province VARCHAR(100),
         created_by INTEGER REFERENCES users(id),
@@ -28,6 +31,9 @@ export async function initIngestionSchema() {
     await pool.query(`ALTER TABLE documents ADD COLUMN IF NOT EXISTS created_by INTEGER REFERENCES users(id)`);
     await pool.query(`ALTER TABLE documents ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN DEFAULT FALSE`);
     await pool.query(`ALTER TABLE documents ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP`);
+    await pool.query(`ALTER TABLE documents ADD COLUMN IF NOT EXISTS class VARCHAR(100)`);
+    await pool.query(`ALTER TABLE documents ADD COLUMN IF NOT EXISTS file_number VARCHAR(100)`);
+    await pool.query(`ALTER TABLE documents ADD COLUMN IF NOT EXISTS folio_number VARCHAR(100)`);
 
     await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_docs_dept_prov
@@ -45,22 +51,25 @@ export async function initIngestionSchema() {
 export async function saveDocumentMetadata(metadata) {
   const result = await pool.query(
     `INSERT INTO documents
-      (name, original_filename, stored_filename, file_path, file_size, mime_type, bucket_name, category, source, department, province, created_at)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, CURRENT_TIMESTAMP)
+      (name, original_filename, stored_filename, file_path, file_size, mime_type, bucket_name, category, source, class, file_number, folio_number, department, province, created_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, CURRENT_TIMESTAMP)
      RETURNING id`,
-    [
-      metadata.name,
-      metadata.originalFilename,
-      metadata.storedFilename,
-      metadata.filePath,
-      metadata.fileSize,
-      metadata.mimeType,
-      metadata.bucketName,
-      metadata.category ?? null,
-      metadata.source ?? null,
-      metadata.department ?? null,
-      metadata.province ?? null
-    ]
+     [
+       metadata.name,
+       metadata.originalFilename,
+       metadata.storedFilename,
+       metadata.filePath,
+       metadata.fileSize,
+       metadata.mimeType,
+       metadata.bucketName,
+       metadata.category ?? null,
+       metadata.source ?? null,
+       metadata.class ?? null,
+       metadata.fileNumber ?? null,
+       metadata.folioNumber ?? null,
+       metadata.department ?? null,
+       metadata.province ?? null
+     ]
   );
 
   return result.rows[0].id;

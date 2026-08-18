@@ -17,6 +17,9 @@ interface Document {
   mime_type: string;
   department: string;
   province: string;
+  class: string;
+  file_number: string;
+  folio_number: string;
   created_at: string;
   bucketUrl: string;
 }
@@ -249,6 +252,15 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId, API_URL, on
           </div>
           <div>
             <strong>Province:</strong> {document.province || 'N/A'}
+          </div>
+          <div>
+            <strong>Class:</strong> {document.class || 'N/A'}
+          </div>
+          <div>
+            <strong>File Number:</strong> {document.file_number || 'N/A'}
+          </div>
+          <div>
+            <strong>Folio Number:</strong> {document.folio_number || 'N/A'}
           </div>
           <div>
             <strong>Created:</strong> {new Date(document.created_at).toLocaleString()}

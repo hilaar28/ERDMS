@@ -46,7 +46,7 @@ router.post('/upload', requireAuth, upload.single('document'), async (req, res) 
     }
 
     const result = await pool.query(
-      'INSERT INTO documents (name, original_filename, stored_filename, file_path, file_size, mime_type, bucket_name, department, province, created_by, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP) RETURNING id',
+      'INSERT INTO documents (name, original_filename, stored_filename, file_path, file_size, mime_type, bucket_name, department, province, class, file_number, folio_number, created_by, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP) RETURNING id',
       [
         metadata.name,
         file.originalname,
@@ -57,6 +57,9 @@ router.post('/upload', requireAuth, upload.single('document'), async (req, res) 
         process.env.MINIO_BUCKET || 'erkms-bucks',
         metadata.department || '',
         metadata.province || '',
+        metadata.class || '',
+        metadata.fileNumber || '',
+        metadata.folioNumber || '',
         req.user?.id || null
       ]
     );

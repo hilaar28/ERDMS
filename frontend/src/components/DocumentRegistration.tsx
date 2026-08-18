@@ -12,6 +12,9 @@ const DocumentRegistration: React.FC<DocumentRegistrationProps> = ({ API_URL }) 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [department, setDepartment] = useState('');
   const [province, setProvince] = useState('');
+  const [docClass, setDocClass] = useState('');
+  const [fileNumber, setFileNumber] = useState('');
+  const [folioNumber, setFolioNumber] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: string; text: string }>({ type: '', text: '' });
   const [documents, setDocuments] = useState<any[]>([]);
@@ -56,7 +59,10 @@ const DocumentRegistration: React.FC<DocumentRegistrationProps> = ({ API_URL }) 
       formData.append('documentMetadata', JSON.stringify({
         name: newDocName.trim(),
         department: department.trim(),
-        province: province.trim()
+        province: province.trim(),
+        class: docClass.trim(),
+        fileNumber: fileNumber.trim(),
+        folioNumber: folioNumber.trim()
       }));
 
       const headers = new Headers();
@@ -87,6 +93,9 @@ const DocumentRegistration: React.FC<DocumentRegistrationProps> = ({ API_URL }) 
       setSelectedFile(null);
       setDepartment('');
       setProvince('');
+      setDocClass('');
+      setFileNumber('');
+      setFolioNumber('');
       fetchDocuments();
     } catch (error: unknown) {
       let text: string;
@@ -198,10 +207,70 @@ const DocumentRegistration: React.FC<DocumentRegistrationProps> = ({ API_URL }) 
                 borderRadius: '4px'
               }}
               disabled={loading}
-            />
-          </div>
+             />
+           </div>
 
-          <button
+           <div style={{ marginBottom: '1rem' }}>
+             <label htmlFor="docClass" style={{ display: 'block', marginBottom: '0.5rem' }}>
+               Class
+             </label>
+             <input
+               id="docClass"
+               type="text"
+               value={docClass}
+               onChange={(e) => setDocClass(e.target.value)}
+               placeholder="Enter document class"
+               style={{
+                 width: '100%',
+                 padding: '0.75rem',
+                 border: '1px solid #ddd',
+                 borderRadius: '4px'
+               }}
+               disabled={loading}
+             />
+           </div>
+
+           <div style={{ marginBottom: '1rem' }}>
+             <label htmlFor="fileNumber" style={{ display: 'block', marginBottom: '0.5rem' }}>
+               File Number
+             </label>
+             <input
+               id="fileNumber"
+               type="text"
+               value={fileNumber}
+               onChange={(e) => setFileNumber(e.target.value)}
+               placeholder="Enter file number"
+               style={{
+                 width: '100%',
+                 padding: '0.75rem',
+                 border: '1px solid #ddd',
+                 borderRadius: '4px'
+               }}
+               disabled={loading}
+             />
+           </div>
+
+           <div style={{ marginBottom: '1rem' }}>
+             <label htmlFor="folioNumber" style={{ display: 'block', marginBottom: '0.5rem' }}>
+               Folio Number
+             </label>
+             <input
+               id="folioNumber"
+               type="text"
+               value={folioNumber}
+               onChange={(e) => setFolioNumber(e.target.value)}
+               placeholder="Enter folio number"
+               style={{
+                 width: '100%',
+                 padding: '0.75rem',
+                 border: '1px solid #ddd',
+                 borderRadius: '4px'
+               }}
+               disabled={loading}
+             />
+           </div>
+
+           <button
             type="submit"
             disabled={loading || !newDocName.trim() || !selectedFile}
             style={{
