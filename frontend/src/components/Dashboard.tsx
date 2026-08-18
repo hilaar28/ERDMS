@@ -98,7 +98,7 @@ const Dashboard: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
   };
 
   useEffect(() => {
-    if (activeModule === 'documents' || activeModule === 'versioning') {
+    if (activeModule === 'documents' || activeModule === 'versioning' || activeModule === 'document-list') {
       fetchDocuments();
     }
   }, [activeModule]);
@@ -146,6 +146,7 @@ const Dashboard: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: '📊' },
     { id: 'documents', label: 'Document Registration', icon: '📄' },
+    { id: 'document-list', label: 'Document List', icon: '📑' },
     { id: 'versioning', label: 'Version Control', icon: '🔖' },
     { id: 'classification', label: 'Classification', icon: '🗂️' },
     { id: 'indexing', label: 'Search & Index', icon: '🔍' },
@@ -195,6 +196,13 @@ const Dashboard: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
       case 'documents':
         return (
           <DocumentRegistration API_URL={API_URL} onDocumentRegistered={fetchDocuments} />
+        );
+      case 'document-list':
+        return (
+          <div>
+            <h1 style={{ color: '#333', marginBottom: '1.5rem' }}>Documents</h1>
+            <DocumentList documents={documents} onAction={handleDocumentAction} showType={true} onOpen={(id) => setViewingDocumentId(id)} />
+          </div>
         );
       case 'versioning':
         return (
