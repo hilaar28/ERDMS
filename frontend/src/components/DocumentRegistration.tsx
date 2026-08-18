@@ -23,6 +23,9 @@ const DocumentRegistration: React.FC<DocumentRegistrationProps> = ({ API_URL, on
   const [fileNumbers, setFileNumbers] = useState<{ id: number; file_number: string }[]>([]);
   const [folioNumbers, setFolioNumbers] = useState<{ id: number; folio_number: string }[]>([]);
   const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState<{ type: string; text: string }>({ type: '', text: '' });
+  const [documents, setDocuments] = useState<any[]>([]);
+  const [viewingDocumentId, setViewingDocumentId] = useState<number | null>(null);
 
   const fetchDocuments = async () => {
     try {
