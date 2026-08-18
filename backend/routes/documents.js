@@ -275,6 +275,21 @@ router.get('/documents/:id/download', requireAuth, requireDocumentAccess, async 
 
     const stream = fs.createReadStream(filePath);
     stream.pipe(res);
+
+    await createImmutableAuditEntry({
+      document_id: docId,
+      user_id: req.user?.id || null,
+      action: 'document_download',
+      resource_type: 'document',
+      resource_id: docId,
+      old_values: null,
+      new_values: {
+        filename: doc.original_filename,
+        mime_type: doc.mime_type
+      },
+      ip_address: req.ip,
+      user_agent: req.get('User-Agent')
+    });
   } catch (error) {
     console.error('Document download error:', error);
     res.status(500).json({ error: 'Failed to download document' });
@@ -315,6 +330,21 @@ router.get('/documents/:id/view', requireAuth, requireDocumentAccess, async (req
 
     const stream = fs.createReadStream(filePath);
     stream.pipe(res);
+
+    await createImmutableAuditEntry({
+      document_id: docId,
+      user_id: req.user?.id || null,
+      action: 'document_view',
+      resource_type: 'document',
+      resource_id: docId,
+      old_values: null,
+      new_values: {
+        filename: doc.original_filename,
+        mime_type: doc.mime_type
+      },
+      ip_address: req.ip,
+      user_agent: req.get('User-Agent')
+    });
   } catch (error) {
     console.error('Document view error:', error);
     res.status(500).json({ error: 'Failed to view document' });
