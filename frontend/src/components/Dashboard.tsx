@@ -97,9 +97,19 @@ const Dashboard: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
   };
 
   useEffect(() => {
-    if (activeModule === 'documents') {
+    if (activeModule === 'documents' || activeModule === 'versioning') {
       fetchDocuments();
     }
+  }, [activeModule]);
+
+  useEffect(() => {
+    const handleFocus = () => {
+      if (activeModule === 'documents' || activeModule === 'versioning') {
+        fetchDocuments();
+      }
+    };
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
   }, [activeModule]);
 
   const fetchDocuments = async () => {
