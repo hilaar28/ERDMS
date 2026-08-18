@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import DocumentList from './DocumentList';
+import DocumentViewer from './DocumentViewer';
 import { getAuthHeaders } from '../utils/auth';
 
 interface DocumentRegistrationProps {
@@ -14,6 +15,7 @@ const DocumentRegistration: React.FC<DocumentRegistrationProps> = ({ API_URL }) 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: string; text: string }>({ type: '', text: '' });
   const [documents, setDocuments] = useState<any[]>([]);
+  const [viewingDocumentId, setViewingDocumentId] = useState<number | null>(null);
 
   const fetchDocuments = async () => {
     try {
@@ -245,7 +247,38 @@ const DocumentRegistration: React.FC<DocumentRegistrationProps> = ({ API_URL }) 
           Refresh
         </button>
       </div>
-      <DocumentList documents={documents} />
+      <DocumentList documents={documents} onOpen={(id) => setViewingDocumentId(id)} />
+
+      {viewingDocumentId && (
+        <div style={{
+          position: 'fixed',
+          top: '0',
+          left: '0',
+          width: '100vw',
+          height: '100vh',
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: '9999'
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '8px',
+            width: '90vw',
+            maxWidth: '900px',
+            maxHeight: '85vh',
+            overflow: 'auto',
+            margin: '1rem'
+          }}>
+            <DocumentViewer
+              documentId={viewingDocumentId}
+              API_URL={API_URL}
+              onClose={() => setViewingDocumentId(null)}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -34,6 +34,8 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId, API_URL, on
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState<{ type: string; text: string }>({ type: '', text: '' });
+  const [viewerBlobUrl, setViewerBlobUrl] = useState<string | null>(null);
+  const [viewerError, setViewerError] = useState<string>('');
 
   const versioningUrl = API_URL.replace('/documents', '/versioning');
 
@@ -41,6 +43,14 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId, API_URL, on
     fetchDocument();
     fetchComments();
   }, [documentId]);
+
+  useEffect(() => {
+    return () => {
+      if (viewerBlobUrl) {
+        URL.revokeObjectURL(viewerBlobUrl);
+      }
+    };
+  }, [viewerBlobUrl]);
 
   const getAuthHeaders = () => {
     const token = localStorage.getItem('token');
@@ -105,32 +115,51 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId, API_URL, on
     }
   };
 
-  const handleViewDocument = async () => {
-    const token = localStorage.getItem('token');
-    const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
-    
-    // Determine if we can preview inline (images, PDFs, text documents)
-    const previewableTypes = ['image/', 'application/pdf', 'text/', 'application/msword',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      'application/vnd.openxmlformats-officedocument.presentationml.presentation'];
-    const isPreviewable = document.mime_type && previewableTypes.some(t => document.mime_type.startsWith(t) || document.mime_type === t);
-    
-    const endpoint = isPreviewable ? 'view' : 'download';
-    
+  const loadInlineViewer = async () => {
+    setViewerError('');
+    setViewerBlobUrl(null);
+
     try {
-      const response = await fetch(`${API_URL}/documents/${documentId}/${endpoint}`, { headers });
+      const response = await fetch(`${API_URL}/documents/${documentId}/view`, {
+        headers: getAuthHeaders()
+      });
+
       if (!response.ok) {
-        setMessage({ type: 'error', text: 'Failed to fetch document' });
+        setViewerError('Failed to load document for preview');
         return;
       }
+
       const blob = await response.blob();
       const blobUrl = URL.createObjectURL(blob);
-      window.open(blobUrl, '_blank');
-      // Clean up blob URL after it's been opened
-      setTimeout(() => URL.revokeObjectURL(blobUrl), 30000);
+      setViewerBlobUrl(blobUrl);
     } catch (error) {
-      setMessage({ type: 'error', text: 'Failed to open document' });
+      console.error('Failed to load inline viewer:', error);
+      setViewerError('Failed to load document for preview');
+    }
+  };
+
+  const handleDownload = async () => {
+    try {
+      const response = await fetch(`${API_URL}/documents/${documentId}/download`, {
+        headers: getAuthHeaders()
+      });
+
+      if (!response.ok) {
+        setMessage({ type: 'error', text: 'Failed to download document' });
+        return;
+      }
+
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = document.original_filename || `document_${documentId}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      setMessage({ type: 'error', text: 'Failed to download document' });
     }
   };
 
@@ -179,20 +208,95 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ documentId, API_URL, on
             <strong>Created:</strong> {new Date(document.created_at).toLocaleString()}
           </div>
         </div>
-        <button
-          onClick={handleViewDocument}
-          style={{
-            padding: '0.6rem 1.2rem',
-            backgroundColor: '#6f42c1',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            fontSize: '0.9rem'
-          }}
-        >
-          Open Document
-        </button>
+        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+          <button
+            onClick={loadInlineViewer}
+            style={{
+              padding: '0.6rem 1.2rem',
+              backgroundColor: '#17a2b8',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '0.9rem'
+            }}
+          >
+            Preview
+          </button>
+          <button
+            onClick={handleDownload}
+            style={{
+              padding: '0.6rem 1.2rem',
+              backgroundColor: '#6f42c1',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '0.9rem'
+            }}
+          >
+            Download
+          </button>
+        </div>
+
+        {viewerError && (
+          <div style={{ marginTop: '1rem', padding: '0.75rem', backgroundColor: '#f8d7da', color: '#721c24', borderRadius: '4px' }}>
+            {viewerError}
+          </div>
+        )}
+
+        {viewerBlobUrl && (
+          <div style={{ marginTop: '1rem', border: '1px solid #ddd', borderRadius: '4px', overflow: 'hidden', minHeight: '400px' }}>
+            {document.mime_type === 'application/pdf' && (
+              <embed
+                src={viewerBlobUrl}
+                type="application/pdf"
+                width="100%"
+                height="600px"
+                style={{ border: 'none' }}
+              />
+            )}
+            {(document.mime_type?.startsWith('image/')) && (
+              <div style={{ textAlign: 'center', backgroundColor: '#f8fafc' }}>
+                <img
+                  src={viewerBlobUrl}
+                  alt={document.name}
+                  style={{ maxWidth: '100%', maxHeight: '70vh', objectFit: 'contain' }}
+                />
+              </div>
+            )}
+            {(document.mime_type?.startsWith('text/') || document.mime_type === 'application/json') && (
+              <object
+                data={viewerBlobUrl}
+                type={document.mime_type || 'text/plain'}
+                width="100%"
+                height="500px"
+                style={{ border: 'none', backgroundColor: '#fff' }}
+              >
+                <iframe src={viewerBlobUrl} width="100%" height="500px" style={{ border: 'none' }} />
+              </object>
+            )}
+            {document.mime_type && !document.mime_type.startsWith('image/') && document.mime_type !== 'application/pdf' && !document.mime_type.startsWith('text/') && document.mime_type !== 'application/json' && (
+              <div style={{ padding: '2rem', textAlign: 'center', backgroundColor: '#f8fafc' }}>
+                <p style={{ marginBottom: '1rem', color: '#666' }}>Inline preview is not available for this file type.</p>
+                <button
+                  onClick={handleDownload}
+                  style={{
+                    padding: '0.6rem 1.2rem',
+                    backgroundColor: '#6f42c1',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '0.9rem'
+                  }}
+                >
+                  Download to View
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <div style={{ marginBottom: '1.5rem' }}>
