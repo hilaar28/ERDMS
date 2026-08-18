@@ -12,6 +12,7 @@ import AuditTrail from './AuditTrail';
 import TaskAssignment from './TaskAssignment';
 import NotificationCenter from './NotificationCenter';
 import DocumentViewer from './DocumentViewer';
+import ClassificationManagement from './ClassificationManagement';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api/documents';
 
@@ -146,6 +147,7 @@ const Dashboard: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
     { id: 'dashboard', label: 'Dashboard', icon: '📊' },
     { id: 'documents', label: 'Document Registration', icon: '📄' },
     { id: 'versioning', label: 'Version Control', icon: '🔖' },
+    { id: 'classification', label: 'Classification', icon: '🗂️' },
     { id: 'indexing', label: 'Search & Index', icon: '🔍' },
     { id: 'cms', label: 'Legal CMS', icon: '🏛️' },
     { id: 'auth', label: 'User Management', icon: '👥' },
@@ -210,6 +212,8 @@ const Dashboard: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
             )}
           </div>
         );
+      case 'classification':
+        return <ClassificationManagement API_URL={API_URL} />;
       case 'indexing':
         return <IndexingModule API_URL={API_URL} />;
       case 'cms':
