@@ -5,9 +5,10 @@ import { getAuthHeaders } from '../utils/auth';
 
 interface DocumentRegistrationProps {
   API_URL: string;
+  onDocumentRegistered?: () => void;
 }
 
-const DocumentRegistration: React.FC<DocumentRegistrationProps> = ({ API_URL }) => {
+const DocumentRegistration: React.FC<DocumentRegistrationProps> = ({ API_URL, onDocumentRegistered }) => {
   const [newDocName, setNewDocName] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [department, setDepartment] = useState('');
@@ -218,6 +219,7 @@ const DocumentRegistration: React.FC<DocumentRegistrationProps> = ({ API_URL }) 
       setNewClassName('');
       setNewFileNumber('');
       fetchDocuments();
+      onDocumentRegistered?.();
     } catch (error: unknown) {
       let text: string;
       if (error instanceof Error) {

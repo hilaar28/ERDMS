@@ -192,7 +192,7 @@ const Dashboard: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
         );
       case 'documents':
         return (
-          <DocumentRegistration API_URL={API_URL} />
+          <DocumentRegistration API_URL={API_URL} onDocumentRegistered={fetchDocuments} />
         );
       case 'versioning':
         return (
