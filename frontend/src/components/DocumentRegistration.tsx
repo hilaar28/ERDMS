@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import DocumentList from './DocumentList';
 import DocumentViewer from './DocumentViewer';
 import { getAuthHeaders } from '../utils/auth';
 
@@ -24,24 +23,9 @@ const DocumentRegistration: React.FC<DocumentRegistrationProps> = ({ API_URL, on
   const [folioNumbers, setFolioNumbers] = useState<{ id: number; folio_number: string }[]>([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: string; text: string }>({ type: '', text: '' });
-  const [documents, setDocuments] = useState<any[]>([]);
   const [viewingDocumentId, setViewingDocumentId] = useState<number | null>(null);
 
-  const fetchDocuments = async () => {
-    try {
-      const response = await fetch(`${API_URL}/documents`, { headers: getAuthHeaders() });
-      if (response.ok) {
-        const data = await response.json();
-        setDocuments(data.data || []);
-      }
-    } catch (error: unknown) {
-      const text = error instanceof Error ? error.message : 'Failed to fetch documents';
-      setMessage({ type: 'error', text });
-    }
-  };
-
   useEffect(() => {
-    fetchDocuments();
     fetchClasses();
   }, []);
 
@@ -170,7 +154,6 @@ const DocumentRegistration: React.FC<DocumentRegistrationProps> = ({ API_URL, on
       setFolioNumber('');
       setFileNumbers([]);
       setFolioNumbers([]);
-      fetchDocuments();
       onDocumentRegistered?.();
     } catch (error: unknown) {
       let text: string;
@@ -382,25 +365,6 @@ const DocumentRegistration: React.FC<DocumentRegistrationProps> = ({ API_URL, on
           </div>
         )}
       </div>
-
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-        <h2 style={{ color: '#333', margin: 0 }}>Documents</h2>
-        <button
-          onClick={fetchDocuments}
-          style={{
-            padding: '0.4rem 0.75rem',
-            backgroundColor: '#17a2b8',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            fontSize: '0.85rem'
-          }}
-        >
-          Refresh
-        </button>
-      </div>
-      <DocumentList documents={documents} onOpen={(id) => setViewingDocumentId(id)} />
 
       {viewingDocumentId && (
         <div style={{
