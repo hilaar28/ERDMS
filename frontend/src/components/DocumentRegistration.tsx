@@ -10,8 +10,6 @@ interface DocumentRegistrationProps {
 const DocumentRegistration: React.FC<DocumentRegistrationProps> = ({ API_URL, onDocumentRegistered }) => {
   const [newDocName, setNewDocName] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [department, setDepartment] = useState('');
-  const [province, setProvince] = useState('');
   const [classId, setClassId] = useState<number | null>(null);
   const [fileNumberId, setFileNumberId] = useState<number | null>(null);
   const [folioNumberId, setFolioNumberId] = useState<number | null>(null);
@@ -108,8 +106,6 @@ const DocumentRegistration: React.FC<DocumentRegistrationProps> = ({ API_URL, on
       formData.append('document', selectedFile);
       formData.append('documentMetadata', JSON.stringify({
         name: newDocName.trim(),
-        department: department.trim(),
-        province: province.trim(),
         class: className,
         fileNumber: fileNumber,
         folioNumber: folioNumber,
@@ -144,8 +140,6 @@ const DocumentRegistration: React.FC<DocumentRegistrationProps> = ({ API_URL, on
       setMessage({ type: 'success', text: 'Document registered successfully!' });
       setNewDocName('');
       setSelectedFile(null);
-      setDepartment('');
-      setProvince('');
       setClassId(null);
       setFileNumberId(null);
       setFolioNumberId(null);
@@ -222,51 +216,7 @@ const DocumentRegistration: React.FC<DocumentRegistrationProps> = ({ API_URL, on
                 Selected: {selectedFile.name} ({Math.round(selectedFile.size / 1024)} KB)
               </div>
             )}
-          </div>
-
-          <div style={{ marginBottom: '1rem' }}>
-            <label htmlFor="department" style={{ display: 'block', marginBottom: '0.5rem' }}>
-              Department
-            </label>
-            <select
-              id="department"
-              value={department}
-              onChange={(e) => setDepartment(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '0.75rem',
-                border: '1px solid #ddd',
-                borderRadius: '4px'
-              }}
-              disabled={loading}
-            >
-              <option value="">-- Select Department --</option>
-              <option value="Finance">Finance</option>
-              <option value="Legal">Legal</option>
-              <option value="Gender Equality">Gender Equality</option>
-              <option value="General">General</option>
-            </select>
-          </div>
-
-          <div style={{ marginBottom: '1.5rem' }}>
-            <label htmlFor="province" style={{ display: 'block', marginBottom: '0.5rem' }}>
-              Province
-            </label>
-            <input
-              id="province"
-              type="text"
-              value={province}
-              onChange={(e) => setProvince(e.target.value)}
-              placeholder="Enter province"
-              style={{
-                width: '100%',
-                padding: '0.75rem',
-                border: '1px solid #ddd',
-                borderRadius: '4px'
-              }}
-              disabled={loading}
-             />
-           </div>
+            </div>
 
             <div style={{ marginBottom: '1rem' }}>
               <label htmlFor="classId" style={{ display: 'block', marginBottom: '0.5rem' }}>
