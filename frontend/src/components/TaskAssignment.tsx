@@ -13,6 +13,7 @@ interface Task {
   assigned_by: number;
   assigner_username: string;
   assigner_full_name: string;
+  folio_number?: string;
   status: string;
   priority: string;
   due_date: string;
@@ -141,6 +142,13 @@ const TaskAssignment: React.FC<TaskAssignmentProps> = ({ API_URL }) => {
     setMessage({ type: '', text: '' });
 
     try {
+      const selectedDoc = documents.find(
+        (d) => String(d.id) === String(taskForm.documentId)
+      );
+      const folioNumberId = selectedDoc?.folio_number_id
+        ? parseInt(selectedDoc.folio_number_id)
+        : null;
+
       const response = await fetch(`${tasksUrl}/tasks`, {
         method: 'POST',
         headers: {
@@ -151,6 +159,7 @@ const TaskAssignment: React.FC<TaskAssignmentProps> = ({ API_URL }) => {
           title: taskForm.title,
           description: taskForm.description,
           documentId: taskForm.documentId ? parseInt(taskForm.documentId) : null,
+          folioNumberId,
           assignedTo: taskForm.assignedTo ? parseInt(taskForm.assignedTo) : null,
           priority: taskForm.priority,
           dueDate: taskForm.dueDate || null
@@ -468,6 +477,11 @@ const TaskAssignment: React.FC<TaskAssignmentProps> = ({ API_URL }) => {
             <div style={{ fontSize: '0.8rem', color: '#666', marginBottom: '0.25rem' }}>
               {task.document_name || 'No document'}
             </div>
+            {task.folio_number && (
+              <div style={{ fontSize: '0.75rem', color: '#888', marginBottom: '0.25rem' }}>
+                Folio: {task.folio_number}
+              </div>
+            )}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{
                 padding: '0.15rem 0.5rem',
