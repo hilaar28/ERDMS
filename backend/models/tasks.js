@@ -47,6 +47,9 @@ export async function initializeTaskTables() {
     await pool.query(`ALTER TABLE tasks ADD COLUMN IF NOT EXISTS folio_number_id INTEGER REFERENCES folio_numbers(id) ON DELETE SET NULL`);
     await pool.query(`CREATE INDEX IF NOT EXISTS idx_tasks_folio_number_id ON tasks(folio_number_id)`);
 
+    await pool.query(`ALTER TABLE tasks ADD COLUMN IF NOT EXISTS requirement_type VARCHAR(50)`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_tasks_requirement_type ON tasks(requirement_type)`);
+
     await pool.query(`
       CREATE TABLE IF NOT EXISTS task_assignments (
         id SERIAL PRIMARY KEY,
@@ -111,17 +114,18 @@ export async function createTask({
   assignedTo,
   assignedBy,
   priority = 'normal',
-  dueDate = null
+  dueDate = null,
+  requirementType = null
 }) {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
 
     const taskResult = await client.query(
-      `INSERT INTO tasks (title, description, document_id, folio_number_id, assigned_to, assigned_by, priority, due_date)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      `INSERT INTO tasks (title, description, document_id, folio_number_id, assigned_to, assigned_by, priority, due_date, requirement_type)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
        RETURNING *`,
-      [title, description, documentId, folioNumberId || null, assignedTo, assignedBy, priority, dueDate]
+      [title, description, documentId, folioNumberId || null, assignedTo, assignedBy, priority, dueDate, requirementType || null]
     );
 
     const task = taskResult.rows[0];
@@ -292,7 +296,7 @@ export async function updateTask(taskId, updates) {
   const values = [];
   let paramCount = 0;
 
-  const updatableFields = ['title', 'description', 'priority', 'due_date', 'assigned_to'];
+  const updatableFields = ['title', 'description', 'priority', 'due_date', 'assigned_to', 'requirement_type'];
   for (const field of updatableFields) {
     if (updates[field] !== undefined) {
       paramCount++;

@@ -28,7 +28,7 @@ router.use(requireAuth);
 
 router.post('/tasks', requirePermission('document:create'), async (req, res) => {
   try {
-    const { title, description, documentId, folioNumberId, assignedTo, priority, dueDate } = req.body;
+    const { title, description, documentId, folioNumberId, assignedTo, priority, dueDate, requirementType } = req.body;
 
     if (!title || !title.trim()) {
       return res.status(400).json({ error: 'Task title is required' });
@@ -39,6 +39,7 @@ router.post('/tasks', requirePermission('document:create'), async (req, res) => 
       description,
       documentId: documentId || null,
       folioNumberId: folioNumberId || null,
+      requirementType: requirementType || null,
       assignedTo: assignedTo || null,
       assignedBy: req.user.id,
       priority: priority || 'normal',
