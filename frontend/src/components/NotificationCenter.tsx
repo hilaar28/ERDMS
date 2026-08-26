@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import DocumentViewer from './DocumentViewer';
 
 interface Notification {
   id: number;
@@ -23,6 +24,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ API_URL }) => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: string; text: string }>({ type: '', text: '' });
   const [unreadCount, setUnreadCount] = useState(0);
+  const [viewingDocumentId, setViewingDocumentId] = useState<number | null>(null);
 
   const getAuthHeaders = () => {
     const token = localStorage.getItem('token');
@@ -225,6 +227,23 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ API_URL }) => {
                 </div>
               </div>
               <div style={{ display: 'flex', gap: '0.3rem', alignItems: 'center' }}>
+                {notification.document_id && (
+                  <button
+                    onClick={() => setViewingDocumentId(notification.document_id)}
+                    style={{
+                      padding: '0.2rem 0.5rem',
+                      backgroundColor: '#17a2b8',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      fontSize: '0.75rem'
+                    }}
+                    title="View document"
+                  >
+                    View Document
+                  </button>
+                )}
                 {!notification.is_read && (
                   <button
                     onClick={() => handleMarkRead(notification.id)}
@@ -271,6 +290,37 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ API_URL }) => {
         }}>
           <span style={{ fontSize: '2rem', marginBottom: '0.5rem', display: 'block' }}>🔔</span>
           No notifications
+        </div>
+      )}
+
+      {viewingDocumentId && (
+        <div style={{
+          position: 'fixed',
+          top: '0',
+          left: '0',
+          width: '100vw',
+          height: '100vh',
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: '9999'
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '8px',
+            width: '90vw',
+            maxWidth: '900px',
+            maxHeight: '85vh',
+            overflow: 'auto',
+            margin: '1rem'
+          }}>
+            <DocumentViewer
+              documentId={viewingDocumentId}
+              API_URL={API_URL}
+              onClose={() => setViewingDocumentId(null)}
+            />
+          </div>
         </div>
       )}
     </div>

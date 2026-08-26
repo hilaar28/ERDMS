@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getAuthHeaders, getRefreshToken, getToken, clearTokens } from '../utils/auth';
+import DocumentViewer from './DocumentViewer';
 
 interface Task {
   id: number;
@@ -44,6 +45,7 @@ const TaskAssignment: React.FC<TaskAssignmentProps> = ({ API_URL }) => {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [showAssignForm, setShowAssignForm] = useState(false);
   const [viewMode, setViewMode] = useState<'all' | 'my'>('all');
+  const [viewingDocumentId, setViewingDocumentId] = useState<number | null>(null);
 
   const [taskForm, setTaskForm] = useState({
     title: '',
@@ -498,7 +500,7 @@ const TaskAssignment: React.FC<TaskAssignmentProps> = ({ API_URL }) => {
                 </span>
               )}
             </div>
-            <div style={{ marginTop: '0.5rem' }}>
+            <div style={{ marginTop: '0.5rem', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
               <select
                 value={task.status}
                 onChange={(e) => handleStatusChange(task.id, e.target.value)}
@@ -514,6 +516,23 @@ const TaskAssignment: React.FC<TaskAssignmentProps> = ({ API_URL }) => {
                   <option key={opt.value} value={opt.value}>{opt.label}</option>
                 ))}
               </select>
+              {task.document_id && (
+                <button
+                  type="button"
+                  onClick={() => setViewingDocumentId(task.document_id)}
+                  style={{
+                    padding: '0.2rem 0.5rem',
+                    backgroundColor: '#17a2b8',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '0.8rem'
+                  }}
+                >
+                  View Document
+                </button>
+              )}
             </div>
           </div>
         );
@@ -550,6 +569,37 @@ const TaskAssignment: React.FC<TaskAssignmentProps> = ({ API_URL }) => {
 
       {(!currentUserId || tasks.length === 0) && (
         <p style={{ color: '#999', textAlign: 'center', marginTop: '2rem' }}>No tasks found</p>
+      )}
+
+      {viewingDocumentId && (
+        <div style={{
+          position: 'fixed',
+          top: '0',
+          left: '0',
+          width: '100vw',
+          height: '100vh',
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: '9999'
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '8px',
+            width: '90vw',
+            maxWidth: '900px',
+            maxHeight: '85vh',
+            overflow: 'auto',
+            margin: '1rem'
+          }}>
+            <DocumentViewer
+              documentId={viewingDocumentId}
+              API_URL={API_URL}
+              onClose={() => setViewingDocumentId(null)}
+            />
+          </div>
+        </div>
       )}
     </div>
   );
