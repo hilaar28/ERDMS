@@ -28,7 +28,7 @@ router.use(requireAuth);
 
 router.post('/tasks', requirePermission('document:create'), async (req, res) => {
   try {
-    const { title, description, documentId, assignedTo, priority, dueDate } = req.body;
+    const { title, description, documentId, folioNumberId, assignedTo, priority, dueDate } = req.body;
 
     if (!title || !title.trim()) {
       return res.status(400).json({ error: 'Task title is required' });
@@ -38,6 +38,7 @@ router.post('/tasks', requirePermission('document:create'), async (req, res) => 
       title: title.trim(),
       description,
       documentId: documentId || null,
+      folioNumberId: folioNumberId || null,
       assignedTo: assignedTo || null,
       assignedBy: req.user.id,
       priority: priority || 'normal',
@@ -72,6 +73,7 @@ router.get('/tasks', requirePermission('document:search'), async (req, res) => {
     if (req.query.assignedBy) filters.assignedBy = parseInt(req.query.assignedBy);
     if (req.query.status) filters.status = req.query.status;
     if (req.query.documentId) filters.documentId = parseInt(req.query.documentId);
+    if (req.query.folioNumberId) filters.folioNumberId = parseInt(req.query.folioNumberId);
     if (req.query.priority) filters.priority = req.query.priority;
     if (req.query.overdue) filters.overdue = req.query.overdue;
 

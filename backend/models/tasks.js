@@ -8,6 +8,7 @@ export async function initializeTaskTables() {
         title VARCHAR(255) NOT NULL,
         description TEXT,
         document_id INTEGER REFERENCES documents(id) ON DELETE CASCADE,
+        folio_number_id INTEGER REFERENCES folio_numbers(id) ON DELETE SET NULL,
         assigned_to INTEGER REFERENCES users(id) ON DELETE SET NULL,
         assigned_by INTEGER REFERENCES users(id),
         status VARCHAR(50) NOT NULL DEFAULT 'pending',
@@ -42,6 +43,9 @@ export async function initializeTaskTables() {
     await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_tasks_created_at ON tasks(created_at)
     `);
+
+    await pool.query(`ALTER TABLE tasks ADD COLUMN IF NOT EXISTS folio_number_id INTEGER REFERENCES folio_numbers(id) ON DELETE SET NULL`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_tasks_folio_number_id ON tasks(folio_number_id)`);
 
     await pool.query(`
       CREATE TABLE IF NOT EXISTS task_assignments (
@@ -103,6 +107,7 @@ export async function createTask({
   title,
   description,
   documentId,
+  folioNumberId,
   assignedTo,
   assignedBy,
   priority = 'normal',
@@ -113,10 +118,10 @@ export async function createTask({
     await client.query('BEGIN');
 
     const taskResult = await client.query(
-      `INSERT INTO tasks (title, description, document_id, assigned_to, assigned_by, priority, due_date)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
+      `INSERT INTO tasks (title, description, document_id, folio_number_id, assigned_to, assigned_by, priority, due_date)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING *`,
-      [title, description, documentId, assignedTo, assignedBy, priority, dueDate]
+      [title, description, documentId, folioNumberId || null, assignedTo, assignedBy, priority, dueDate]
     );
 
     const task = taskResult.rows[0];
@@ -166,12 +171,16 @@ export async function getTasks(filters = {}) {
   let query = `
     SELECT t.*,
            d.name as document_name,
+           fn.folio_number as folio_number,
+           d.file_number,
+           d.class,
            assignee.username as assignee_username,
            assignee.full_name as assignee_full_name,
            assigner.username as assigner_username,
            assigner.full_name as assigner_full_name
     FROM tasks t
     LEFT JOIN documents d ON t.document_id = d.id
+    LEFT JOIN folio_numbers fn ON t.folio_number_id = fn.id
     LEFT JOIN users assignee ON t.assigned_to = assignee.id
     LEFT JOIN users assigner ON t.assigned_by = assigner.id
     WHERE 1=1
@@ -201,6 +210,12 @@ export async function getTasks(filters = {}) {
     paramCount++;
     params.push(filters.documentId);
     query += ` AND t.document_id = $${paramCount}`;
+  }
+
+  if (filters.folioNumberId) {
+    paramCount++;
+    params.push(filters.folioNumberId);
+    query += ` AND t.folio_number_id = $${paramCount}`;
   }
 
   if (filters.priority) {
