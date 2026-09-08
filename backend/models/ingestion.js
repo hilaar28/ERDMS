@@ -4,6 +4,18 @@ import pool from '../db.js';
 export async function initIngestionSchema() {
   try {
     await pool.query(`
+      CREATE TABLE IF NOT EXISTS folders (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        parent_id INTEGER REFERENCES folders(id) ON DELETE CASCADE,
+        path VARCHAR(1024),
+        created_by INTEGER REFERENCES users(id),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    await pool.query(`
       CREATE TABLE IF NOT EXISTS documents (
         id SERIAL PRIMARY KEY,
         name VARCHAR(255) NOT NULL,
@@ -21,6 +33,7 @@ export async function initIngestionSchema() {
         class_id INTEGER REFERENCES classes(id),
         file_number_id INTEGER REFERENCES file_numbers(id),
         folio_number_id INTEGER REFERENCES folio_numbers(id),
+        folder_id INTEGER REFERENCES folders(id) ON DELETE SET NULL,
         department VARCHAR(100),
         province VARCHAR(100),
         created_by INTEGER REFERENCES users(id),
@@ -40,10 +53,21 @@ export async function initIngestionSchema() {
     await pool.query(`ALTER TABLE documents ADD COLUMN IF NOT EXISTS class_id INTEGER REFERENCES classes(id)`);
     await pool.query(`ALTER TABLE documents ADD COLUMN IF NOT EXISTS file_number_id INTEGER REFERENCES file_numbers(id)`);
     await pool.query(`ALTER TABLE documents ADD COLUMN IF NOT EXISTS folio_number_id INTEGER REFERENCES folio_numbers(id)`);
+    await pool.query(`ALTER TABLE documents ADD COLUMN IF NOT EXISTS folder_id INTEGER REFERENCES folders(id) ON DELETE SET NULL`);
 
     await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_docs_dept_prov
       ON documents (department, province);
+    `);
+
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_docs_folder_id
+      ON documents (folder_id);
+    `);
+
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_folders_parent_id
+      ON folders (parent_id);
     `);
 
     console.log('Ingestion schema initialized');
@@ -57,8 +81,8 @@ export async function initIngestionSchema() {
 export async function saveDocumentMetadata(metadata) {
   const result = await pool.query(
     `INSERT INTO documents
-      (name, original_filename, stored_filename, file_path, file_size, mime_type, bucket_name, category, source, class, file_number, folio_number, department, province, created_at)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, CURRENT_TIMESTAMP)
+      (name, original_filename, stored_filename, file_path, file_size, mime_type, bucket_name, category, source, class, file_number, folio_number, folder_id, department, province, created_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, CURRENT_TIMESTAMP)
      RETURNING id`,
      [
        metadata.name,
@@ -73,6 +97,7 @@ export async function saveDocumentMetadata(metadata) {
        metadata.class ?? null,
        metadata.fileNumber ?? null,
        metadata.folioNumber ?? null,
+       metadata.folderId ?? null,
        metadata.department ?? null,
        metadata.province ?? null
      ]

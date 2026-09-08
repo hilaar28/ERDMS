@@ -65,11 +65,15 @@ const DocumentRegistration: React.FC<DocumentRegistrationProps> = ({ API_URL, on
 
   const handleClassChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const id = parseInt(e.target.value) || null;
+    const selectedClass = classes.find(c => c.id === id);
     setClassId(id);
+    setClassName(selectedClass?.name || '');
     setFileNumberId(null);
     setFolioNumberId(null);
     setFileNumbers([]);
     setFolioNumbers([]);
+    setFileNumber('');
+    setFolioNumber('');
     if (id) {
       fetchFileNumbers(id);
     }
@@ -77,12 +81,22 @@ const DocumentRegistration: React.FC<DocumentRegistrationProps> = ({ API_URL, on
 
   const handleFileNumberChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const id = parseInt(e.target.value) || null;
+    const selectedFn = fileNumbers.find(fn => fn.id === id);
     setFileNumberId(id);
+    setFileNumber(selectedFn?.file_number || '');
     setFolioNumberId(null);
     setFolioNumbers([]);
+    setFolioNumber('');
     if (id) {
       fetchFolioNumbers(id);
     }
+  };
+
+  const handleFolioNumberChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const id = parseInt(e.target.value) || null;
+    const selectedFolio = folioNumbers.find(f => f.id === id);
+    setFolioNumberId(id);
+    setFolioNumber(selectedFolio?.folio_number || '');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -271,7 +285,7 @@ const DocumentRegistration: React.FC<DocumentRegistrationProps> = ({ API_URL, on
               <select
                 id="folioNumberId"
                 value={folioNumberId || ''}
-                onChange={(e) => setFolioNumberId(parseInt(e.target.value) || null)}
+                onChange={handleFolioNumberChange}
                 style={{
                   width: '100%',
                   padding: '0.75rem',

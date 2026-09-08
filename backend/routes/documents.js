@@ -46,7 +46,7 @@ router.post('/upload', requireAuth, upload.single('document'), async (req, res) 
     }
 
     const result = await pool.query(
-      'INSERT INTO documents (name, original_filename, stored_filename, file_path, file_size, mime_type, bucket_name, department, province, class, file_number, folio_number, class_id, file_number_id, folio_number_id, created_by, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP) RETURNING id',
+      'INSERT INTO documents (name, original_filename, stored_filename, file_path, file_size, mime_type, bucket_name, department, province, class, file_number, folio_number, class_id, file_number_id, folio_number_id, folder_id, created_by, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP) RETURNING id',
       [
         metadata.name,
         file.originalname,
@@ -63,6 +63,7 @@ router.post('/upload', requireAuth, upload.single('document'), async (req, res) 
         metadata.classId || null,
         metadata.fileNumberId || null,
         metadata.folioNumberId || null,
+        metadata.folderId || null,
         req.user?.id || null
       ]
     );
@@ -190,6 +191,18 @@ router.get('/documents', requireAuth, requirePermission('document:search'), asyn
       const paramIndex = scopeParams.length + 1;
       query += ` AND d.category = $${paramIndex}`;
       scopeParams.push(req.query.category);
+    }
+
+    if (req.query.folderId) {
+      const paramIndex = scopeParams.length + 1;
+      query += ` AND d.folder_id = $${paramIndex}`;
+      scopeParams.push(parseInt(req.query.folderId));
+    }
+
+    if (req.query.fileNumberId) {
+      const paramIndex = scopeParams.length + 1;
+      query += ` AND d.file_number_id = $${paramIndex}`;
+      scopeParams.push(parseInt(req.query.fileNumberId));
     }
 
     query += ' ORDER BY d.created_at DESC LIMIT 100';
@@ -348,6 +361,103 @@ router.get('/documents/:id/view', requireAuth, requireDocumentAccess, async (req
   } catch (error) {
     console.error('Document view error:', error);
     res.status(500).json({ error: 'Failed to view document' });
+  }
+});
+
+// Folder CRUD
+router.get('/folders', requireAuth, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT f.*, u.username as created_by_username,
+              (SELECT COUNT(*) FROM documents WHERE folder_id = f.id AND is_deleted = FALSE) as document_count
+       FROM folders f
+       LEFT JOIN users u ON f.created_by = u.id
+       ORDER BY f.name ASC`
+    );
+    res.json({ data: result.rows });
+  } catch (error) {
+    console.error('Folder list error:', error);
+    res.status(500).json({ error: 'Failed to fetch folders' });
+  }
+});
+
+router.get('/folders/tree', requireAuth, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT f.*, u.username as created_by_username,
+              (SELECT COUNT(*) FROM documents WHERE folder_id = f.id AND is_deleted = FALSE) as document_count
+       FROM folders f
+       LEFT JOIN users u ON f.created_by = u.id
+       ORDER BY f.parent_id ASC NULLS FIRST, f.name ASC`
+    );
+    res.json({ data: result.rows });
+  } catch (error) {
+    console.error('Folder tree error:', error);
+    res.status(500).json({ error: 'Failed to fetch folder tree' });
+  }
+});
+
+router.post('/folders', requireAuth, async (req, res) => {
+  try {
+    const { name, parentId } = req.body;
+    if (!name || !name.trim()) {
+      return res.status(400).json({ error: 'Folder name is required' });
+    }
+
+    const parentResult = parentId ? await pool.query('SELECT id, path FROM folders WHERE id = $1', [parentId]) : { rows: [] };
+    const parentPath = parentResult.rows[0]?.path || '';
+    const newPath = parentPath ? `${parentPath}/${name.trim()}` : name.trim();
+
+    const result = await pool.query(
+      'INSERT INTO folders (name, parent_id, path, created_by, created_at, updated_at) VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP) RETURNING *',
+      [name.trim(), parentId || null, newPath, req.user?.id || null]
+    );
+
+    res.status(201).json({ data: result.rows[0] });
+  } catch (error) {
+    console.error('Folder creation error:', error);
+    res.status(500).json({ error: 'Failed to create folder' });
+  }
+});
+
+router.put('/folders/:id', requireAuth, async (req, res) => {
+  try {
+    const folderId = parseInt(req.params.id);
+    const { name, parentId } = req.body;
+
+    const existing = await pool.query('SELECT * FROM folders WHERE id = $1', [folderId]);
+    if (existing.rowCount === 0) {
+      return res.status(404).json({ error: 'Folder not found' });
+    }
+
+    const parentResult = parentId ? await pool.query('SELECT id, path FROM folders WHERE id = $1', [parentId]) : { rows: [] };
+    const parentPath = parentResult.rows[0]?.path || '';
+    const newName = name?.trim() || existing.rows[0].name;
+    const newPath = parentPath ? `${parentPath}/${newName}` : newName;
+
+    const result = await pool.query(
+      'UPDATE folders SET name = $1, parent_id = $2, path = $3, updated_at = CURRENT_TIMESTAMP WHERE id = $4 RETURNING *',
+      [newName, parentId || null, newPath, folderId]
+    );
+
+    res.json({ data: result.rows[0] });
+  } catch (error) {
+    console.error('Folder update error:', error);
+    res.status(500).json({ error: 'Failed to update folder' });
+  }
+});
+
+router.delete('/folders/:id', requireAuth, async (req, res) => {
+  try {
+    const folderId = parseInt(req.params.id);
+    const result = await pool.query('DELETE FROM folders WHERE id = $1 RETURNING id', [folderId]);
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: 'Folder not found' });
+    }
+    res.json({ message: 'Folder deleted' });
+  } catch (error) {
+    console.error('Folder deletion error:', error);
+    res.status(500).json({ error: 'Failed to delete folder' });
   }
 });
 
