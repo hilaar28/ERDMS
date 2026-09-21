@@ -68,6 +68,9 @@ services:
     build:
       context: ../frontend
       dockerfile: Dockerfile
+    volumes:
+      - ../frontend:/app
+      - /app/node_modules
     environment:
       VITE_API_URL: http://localhost:3000/api/documents
     ports:
