@@ -18,7 +18,6 @@ const DocumentRegistration: React.FC<DocumentRegistrationProps> = ({ API_URL, on
   const [folioNumber, setFolioNumber] = useState('');
   const [classes, setClasses] = useState<{ id: number; name: string }[]>([]);
   const [fileNumbers, setFileNumbers] = useState<{ id: number; file_number: string }[]>([]);
-  const [folioNumbers, setFolioNumbers] = useState<{ id: number; folio_number: string }[]>([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: string; text: string }>({ type: '', text: '' });
   const [viewingDocumentId, setViewingDocumentId] = useState<number | null>(null);
@@ -51,18 +50,6 @@ const DocumentRegistration: React.FC<DocumentRegistrationProps> = ({ API_URL, on
     }
   };
 
-  const fetchFolioNumbers = async (fileNumberId: number) => {
-    try {
-      const response = await fetch(`${API_URL.replace('/documents', '/classification')}/file-numbers/${fileNumberId}/folio-numbers`, { headers: getAuthHeaders() });
-      if (response.ok) {
-        const data = await response.json();
-        setFolioNumbers(data);
-      }
-    } catch (error) {
-      console.error('Failed to fetch folio numbers:', error);
-    }
-  };
-
   const fetchNextFolioNumber = async (fileNumberId: number) => {
     try {
       const response = await fetch(`${API_URL.replace('/documents', '/classification')}/file-numbers/${fileNumberId}/next-folio`, { headers: getAuthHeaders() });
@@ -83,7 +70,6 @@ const DocumentRegistration: React.FC<DocumentRegistrationProps> = ({ API_URL, on
     setFileNumberId(null);
     setFolioNumberId(null);
     setFileNumbers([]);
-    setFolioNumbers([]);
     setFileNumber('');
     setFolioNumber('');
     if (id) {
@@ -97,19 +83,10 @@ const DocumentRegistration: React.FC<DocumentRegistrationProps> = ({ API_URL, on
     setFileNumberId(id);
     setFileNumber(selectedFn?.file_number || '');
     setFolioNumberId(null);
-    setFolioNumbers([]);
     setFolioNumber('');
     if (id) {
-      fetchFolioNumbers(id);
       fetchNextFolioNumber(id);
     }
-  };
-
-  const handleFolioNumberChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const id = parseInt(e.target.value) || null;
-    const selectedFolio = folioNumbers.find(f => f.id === id);
-    setFolioNumberId(id);
-    setFolioNumber(selectedFolio?.folio_number || '');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -174,7 +151,6 @@ const DocumentRegistration: React.FC<DocumentRegistrationProps> = ({ API_URL, on
       setFileNumber('');
       setFolioNumber('');
       setFileNumbers([]);
-      setFolioNumbers([]);
       onDocumentRegistered?.();
     } catch (error: unknown) {
       let text: string;
@@ -298,41 +274,17 @@ const DocumentRegistration: React.FC<DocumentRegistrationProps> = ({ API_URL, on
               <input
                 id="folioNumber"
                 type="text"
-                value={folioNumber}
-                onChange={(e) => setFolioNumber(e.target.value)}
+                value={folioNumber || ''}
+                readOnly
                 style={{
                   width: '100%',
                   padding: '0.75rem',
                   border: '1px solid #ddd',
                   borderRadius: '4px',
-                  backgroundColor: '#f8f9fa'
+                  backgroundColor: '#f8f9fa',
+                  color: '#333'
                 }}
-                disabled={loading || !fileNumberId}
               />
-              {folioNumbers.length > 0 && (
-                <div style={{ marginTop: '0.5rem' }}>
-                  <label style={{ display: 'block', fontSize: '0.85rem', color: '#666', marginBottom: '0.25rem' }}>
-                    Or select existing:
-                  </label>
-                  <select
-                    value={folioNumberId || ''}
-                    onChange={handleFolioNumberChange}
-                    style={{
-                      width: '100%',
-                      padding: '0.5rem',
-                      border: '1px solid #ddd',
-                      borderRadius: '4px',
-                      fontSize: '0.85rem'
-                    }}
-                    disabled={loading || !fileNumberId}
-                  >
-                    <option value="">-- Select existing folio --</option>
-                    {folioNumbers.map((folio) => (
-                      <option key={folio.id} value={folio.id}>{folio.folio_number}</option>
-                    ))}
-                  </select>
-                </div>
-              )}
             </div>
 
             <button
@@ -346,9 +298,9 @@ const DocumentRegistration: React.FC<DocumentRegistrationProps> = ({ API_URL, on
               borderRadius: '4px',
               cursor: loading || !newDocName.trim() || !selectedFile ? 'not-allowed' : 'pointer'
             }}
-          >
-            {loading ? 'Uploading...' : 'Register Document'}
-          </button>
+            >
+              {loading ? 'Uploading...' : 'Register Document'}
+            </button>
         </form>
 
         {message.text && (
