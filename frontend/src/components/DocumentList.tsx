@@ -34,11 +34,9 @@ const DocumentList: React.FC<DocumentListProps> = ({ documents, onAction, onOpen
             {showType && (
               <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '2px solid #ddd' }}>Type</th>
             )}
-             <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '2px solid #ddd' }}>Created</th>
-             <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '2px solid #ddd' }}>Class</th>
-             <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '2px solid #ddd' }}>File No.</th>
-             <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '2px solid #ddd' }}>Folio No.</th>
-             {onAction && (
+<th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '2px solid #ddd' }}>Created</th>
+              <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '2px solid #ddd' }}>File No.</th>
+              {onAction && (
                 <th style={{ padding: '0.75rem', textAlign: 'center', borderBottom: '2px solid #ddd' }}>Actions</th>
               )}
               {onOpen && (
@@ -57,9 +55,7 @@ const DocumentList: React.FC<DocumentListProps> = ({ documents, onAction, onOpen
                 <td style={{ padding: '0.75rem' }}>{getFriendlyTypeName(doc.mime_type)}</td>
               )}
               <td style={{ padding: '0.75rem' }}>{new Date(doc.created_at).toLocaleString()}</td>
-              <td style={{ padding: '0.75rem' }}>{doc.class || 'N/A'}</td>
               <td style={{ padding: '0.75rem' }}>{doc.file_number || 'N/A'}</td>
-              <td style={{ padding: '0.75rem' }}>{doc.folio_number || 'N/A'}</td>
               {onAction && (
                 <td style={{ padding: '0.75rem', textAlign: 'center' }}>
                   <button

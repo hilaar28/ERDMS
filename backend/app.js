@@ -21,6 +21,7 @@ import retentionRouter from './routes/retention.js';
 import auditTrailRouter from './routes/auditTrail.js';
 import tasksRouter from './routes/tasks.js';
 import classificationRouter from './routes/classification.js';
+import foldersRouter from './routes/folders.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -53,6 +54,7 @@ app.use('/api/retention', retentionRouter);
 app.use('/api/audit', auditTrailRouter);
 app.use('/api/tasks', tasksRouter);
 app.use('/api/classification', classificationRouter);
+app.use('/api/folders', foldersRouter);
 
 // Health check
 app.get('/health', (req, res) => {

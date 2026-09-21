@@ -1,7 +1,15 @@
 import express from 'express';
 import pool from '../db.js';
 import { requireAuth, requirePermission } from '../middleware/auth.js';
-import { getClasses, createClass, getFileNumbersByClass, createFileNumber, getFolioNumbersByFileNumber, createFolioNumber } from '../models/classification.js';
+import {
+  getClasses,
+  createClass,
+  getFileNumbersByClass,
+  createFileNumber,
+  getFolioNumbersByFileNumber,
+  createFolioNumber,
+  getNextFolioNumber
+} from '../models/classification.js';
 
 const router = express.Router();
 
@@ -78,6 +86,17 @@ router.post('/file-numbers/:fileNumberId/folio-numbers', requireAuth, async (req
   } catch (err) {
     console.error('Create folio number error:', err);
     res.status(500).json({ error: 'Failed to create folio number' });
+  }
+});
+
+router.get('/file-numbers/:fileNumberId/next-folio', requireAuth, async (req, res) => {
+  try {
+    const fileNumberId = parseInt(req.params.fileNumberId);
+    const nextFolio = await getNextFolioNumber(fileNumberId);
+    res.json({ nextFolio });
+  } catch (err) {
+    console.error('Get next folio error:', err);
+    res.status(500).json({ error: 'Failed to get next folio number' });
   }
 });
 

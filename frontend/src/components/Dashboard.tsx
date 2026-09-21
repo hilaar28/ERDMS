@@ -13,6 +13,7 @@ import TaskAssignment from './TaskAssignment';
 import NotificationCenter from './NotificationCenter';
 import DocumentViewer from './DocumentViewer';
 import ClassificationManagement from './ClassificationManagement';
+import FolderTree from './FolderTree';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api/documents';
 
@@ -28,6 +29,7 @@ const Dashboard: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
   const [notificationDropdown, setNotificationDropdown] = useState(false);
   const [recentNotifications, setRecentNotifications] = useState<any[]>([]);
   const [viewingDocumentId, setViewingDocumentId] = useState<number | null>(null);
+  const [selectedFileNumberId, setSelectedFileNumberId] = useState<number | null>(null);
   const notificationRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -99,23 +101,31 @@ const Dashboard: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
 
   useEffect(() => {
     if (activeModule === 'documents' || activeModule === 'versioning' || activeModule === 'document-list') {
-      fetchDocuments();
+      fetchDocuments(selectedFileNumberId);
     }
-  }, [activeModule]);
+  }, [activeModule, selectedFileNumberId]);
 
   useEffect(() => {
     const handleFocus = () => {
       if (activeModule === 'documents' || activeModule === 'versioning') {
-        fetchDocuments();
+        fetchDocuments(selectedFileNumberId);
       }
     };
     window.addEventListener('focus', handleFocus);
     return () => window.removeEventListener('focus', handleFocus);
-  }, [activeModule]);
+  }, [activeModule, selectedFileNumberId]);
 
-  const fetchDocuments = async () => {
+  const fetchDocuments = async (fileNumberId?: number | null) => {
     try {
-      const response = await fetch(`${API_URL}/documents`, { headers: getAuthHeaders() });
+      let url = `${API_URL}/documents`;
+      const params = new URLSearchParams();
+      if (fileNumberId) {
+        params.set('fileNumberId', String(fileNumberId));
+      }
+      if (params.toString()) {
+        url += `?${params.toString()}`;
+      }
+      const response = await fetch(url, { headers: getAuthHeaders() });
       if (response.ok) {
         const data = await response.json();
         setDocuments(data.data || []);
@@ -136,6 +146,10 @@ const Dashboard: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
   const handleDocumentAction = (documentId: number, action: 'history' | 'collab') => {
     setSelectedDocumentId(documentId);
     setModalMode(action);
+  };
+
+  const handleSelectFolder = (fileNumberId: number | null) => {
+    setSelectedFileNumberId(fileNumberId);
   };
 
   const closeModal = () => {
@@ -201,6 +215,7 @@ const Dashboard: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
         return (
           <div>
             <h1 style={{ color: '#333', marginBottom: '1.5rem' }}>Documents</h1>
+            <FolderTree API_URL={API_URL} selectedFolderId={selectedFileNumberId} onSelectFolder={handleSelectFolder} />
             <DocumentList documents={documents} onAction={handleDocumentAction} showType={true} onOpen={(id) => setViewingDocumentId(id)} />
           </div>
         );
@@ -211,6 +226,7 @@ const Dashboard: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
             <p style={{ color: '#666', marginBottom: '1rem' }}>
               View version history and audit logs for all documents.
             </p>
+            <FolderTree API_URL={API_URL} selectedFolderId={selectedFileNumberId} onSelectFolder={handleSelectFolder} />
             {documents.length > 0 ? (
               <DocumentList documents={documents} onAction={handleDocumentAction} showType={true} onOpen={(id) => setViewingDocumentId(id)} />
             ) : (

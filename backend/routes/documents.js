@@ -9,6 +9,7 @@ import { createVersion, createAuditLog } from '../models/versions.js';
 import { createImmutableAuditEntry } from '../models/auditTrail.js';
 import { requireAuth, requirePermission } from '../middleware/auth.js';
 import { requireDocumentAccess, requireDocumentWriteAccess, requireDocumentOwnership, isUserAdmin, buildDocumentScope } from '../middleware/authorization.js';
+import { getFolioNumbersByFileNumber, createFolioNumber } from '../models/classification.js';
 
 const router = express.Router();
 
@@ -45,6 +46,23 @@ router.post('/upload', requireAuth, upload.single('document'), async (req, res) 
       return res.status(400).json({ error: validation.reason });
     }
 
+    let folioNumberId = metadata.folioNumberId || null;
+
+    if (metadata.folioNumber && !folioNumberId && metadata.fileNumberId) {
+      const existingFolios = await getFolioNumbersByFileNumber(metadata.fileNumberId);
+      const existing = existingFolios.find(f => f.folio_number === metadata.folioNumber);
+      if (existing) {
+        folioNumberId = existing.id;
+      } else {
+        const newFolio = await createFolioNumber(
+          metadata.fileNumberId,
+          metadata.folioNumber,
+          metadata.folioNumber
+        );
+        folioNumberId = newFolio.id;
+      }
+    }
+
     const result = await pool.query(
       'INSERT INTO documents (name, original_filename, stored_filename, file_path, file_size, mime_type, bucket_name, department, province, class, file_number, folio_number, class_id, file_number_id, folio_number_id, folder_id, created_by, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP) RETURNING id',
       [
@@ -62,7 +80,7 @@ router.post('/upload', requireAuth, upload.single('document'), async (req, res) 
         metadata.folioNumber || '',
         metadata.classId || null,
         metadata.fileNumberId || null,
-        metadata.folioNumberId || null,
+        folioNumberId,
         metadata.folderId || null,
         req.user?.id || null
       ]

@@ -63,6 +63,18 @@ const DocumentRegistration: React.FC<DocumentRegistrationProps> = ({ API_URL, on
     }
   };
 
+  const fetchNextFolioNumber = async (fileNumberId: number) => {
+    try {
+      const response = await fetch(`${API_URL.replace('/documents', '/classification')}/file-numbers/${fileNumberId}/next-folio`, { headers: getAuthHeaders() });
+      if (response.ok) {
+        const data = await response.json();
+        setFolioNumber(data.nextFolio);
+      }
+    } catch (error) {
+      console.error('Failed to fetch next folio number:', error);
+    }
+  };
+
   const handleClassChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const id = parseInt(e.target.value) || null;
     const selectedClass = classes.find(c => c.id === id);
@@ -89,6 +101,7 @@ const DocumentRegistration: React.FC<DocumentRegistrationProps> = ({ API_URL, on
     setFolioNumber('');
     if (id) {
       fetchFolioNumbers(id);
+      fetchNextFolioNumber(id);
     }
   };
 
@@ -279,26 +292,47 @@ const DocumentRegistration: React.FC<DocumentRegistrationProps> = ({ API_URL, on
             </div>
 
             <div style={{ marginBottom: '1rem' }}>
-              <label htmlFor="folioNumberId" style={{ display: 'block', marginBottom: '0.5rem' }}>
-                Folio Number
+              <label htmlFor="folioNumber" style={{ display: 'block', marginBottom: '0.5rem' }}>
+                Folio Number (auto-generated)
               </label>
-              <select
-                id="folioNumberId"
-                value={folioNumberId || ''}
-                onChange={handleFolioNumberChange}
+              <input
+                id="folioNumber"
+                type="text"
+                value={folioNumber}
+                onChange={(e) => setFolioNumber(e.target.value)}
                 style={{
                   width: '100%',
                   padding: '0.75rem',
                   border: '1px solid #ddd',
-                  borderRadius: '4px'
+                  borderRadius: '4px',
+                  backgroundColor: '#f8f9fa'
                 }}
                 disabled={loading || !fileNumberId}
-              >
-                <option value="">-- Select Folio Number --</option>
-                {folioNumbers.map((folio) => (
-                  <option key={folio.id} value={folio.id}>{folio.folio_number}</option>
-                ))}
-              </select>
+              />
+              {folioNumbers.length > 0 && (
+                <div style={{ marginTop: '0.5rem' }}>
+                  <label style={{ display: 'block', fontSize: '0.85rem', color: '#666', marginBottom: '0.25rem' }}>
+                    Or select existing:
+                  </label>
+                  <select
+                    value={folioNumberId || ''}
+                    onChange={handleFolioNumberChange}
+                    style={{
+                      width: '100%',
+                      padding: '0.5rem',
+                      border: '1px solid #ddd',
+                      borderRadius: '4px',
+                      fontSize: '0.85rem'
+                    }}
+                    disabled={loading || !fileNumberId}
+                  >
+                    <option value="">-- Select existing folio --</option>
+                    {folioNumbers.map((folio) => (
+                      <option key={folio.id} value={folio.id}>{folio.folio_number}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
             </div>
 
             <button

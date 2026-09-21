@@ -97,3 +97,22 @@ export async function createFolioNumber(fileNumberId, folioNumber, description =
   );
   return result.rows[0];
 }
+
+export async function getNextFolioNumber(fileNumberId) {
+  const result = await pool.query(
+    `SELECT folio_number FROM folio_numbers WHERE file_number_id = $1 ORDER BY created_at DESC LIMIT 1`,
+    [fileNumberId]
+  );
+  
+  if (result.rowCount === 0) {
+    return '1';
+  }
+  
+  const lastFolio = result.rows[0].folio_number;
+  const num = parseInt(lastFolio, 10);
+  if (isNaN(num)) {
+    return '1';
+  }
+  
+  return String(num + 1);
+}
