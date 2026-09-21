@@ -192,10 +192,16 @@ router.get('/documents', requireAuth, requirePermission('document:search'), asyn
 
     let query = `
       SELECT d.*,
+             COALESCE(d.class, c.name) AS class,
+             COALESCE(d.file_number, fn.file_number) AS file_number,
+             COALESCE(d.folio_number, fol.folio_number) AS folio_number,
              u.username as created_by_username,
              u.full_name as created_by_full_name
       FROM documents d
       LEFT JOIN users u ON d.created_by = u.id
+      LEFT JOIN classes c ON d.class_id = c.id
+      LEFT JOIN file_numbers fn ON d.file_number_id = fn.id
+      LEFT JOIN folio_numbers fol ON d.folio_number_id = fol.id
       WHERE 1=1 ${scopeClause}
     `;
 
