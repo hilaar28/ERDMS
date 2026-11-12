@@ -72,6 +72,14 @@ Required:
 - `EMAIL_USER`: Email account username
 - `EMAIL_PASS`: Email account password
 
+Optional AI assistant configuration:
+- `OPENAI_API_KEY`: OpenAI API key. Keep this on the backend; never put it in the HTML or other browser code.
+- `OPENAI_MODEL`: Responses API model name. Docker Compose defaults to `gpt-5.4-mini`.
+
+The assistant endpoint is `POST /api/assistant/chat` and accepts `{ "message": "...", "history": [] }`. It limits message/history size and request rate, does not store Responses API conversations, and does not log message bodies. Chat text is sent to OpenAI for a response, so the portal must disclose that and users must not submit sensitive details. Without both environment values the endpoint returns `503`.
+
+For Docker Compose, set `OPENAI_API_KEY` in the environment used to launch Compose. To use this endpoint from a separately hosted portal, set `window.ZGC_ASSISTANT_API_URL` to the full chat endpoint before the portal's inline application script, and configure the backend's `CORS_ORIGIN` to the portal origin.
+
 ## Architecture Notes
 - Production: Use RabbitMQ for processing queue
 - Production: Integrate Apache Tika for metadata extraction

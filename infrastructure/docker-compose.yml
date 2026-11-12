@@ -51,6 +51,8 @@ services:
       EMAIL_PORT: ${EMAIL_PORT:-993}
       EMAIL_USER: ${EMAIL_USER:-}
       EMAIL_PASS: ${EMAIL_PASS:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-5.4-mini}
     ports:
       - "3000:3000"
     depends_on:
@@ -73,6 +75,7 @@ services:
       - /app/node_modules
     environment:
       VITE_API_URL: http://localhost:3000/api/documents
+      VITE_API_PROXY_TARGET: http://backend:3000
     ports:
       - "5173:5173"
     depends_on:

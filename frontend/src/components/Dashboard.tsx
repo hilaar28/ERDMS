@@ -30,6 +30,9 @@ const Dashboard: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
   const [recentNotifications, setRecentNotifications] = useState<any[]>([]);
   const [viewingDocumentId, setViewingDocumentId] = useState<number | null>(null);
   const [selectedFileNumberId, setSelectedFileNumberId] = useState<number | null>(null);
+  const [incomingTasks, setIncomingTasks] = useState<any[]>([]);
+  const [inProgressTasks, setInProgressTasks] = useState<any[]>([]);
+  const [weeklyFinishedTasks, setWeeklyFinishedTasks] = useState<any[]>([]);
   const notificationRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -47,7 +50,8 @@ const Dashboard: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
     if (token) {
       setUser({ token });
     }
-    fetchUnreadCount();
+     fetchUnreadCount();
+    fetchTaskSummary();
     const interval = setInterval(fetchUnreadCount, 30000);
     return () => clearInterval(interval);
   }, []);
@@ -81,6 +85,32 @@ const Dashboard: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
       }
     } catch (error) {
       console.error('Failed to fetch notifications:', error);
+    }
+  };
+
+  const fetchTaskSummary = async () => {
+    const token = getToken();
+    if (!token) return;
+    try {
+      const response = await fetch(`${API_URL.replace('/documents', '/tasks')}/me/tasks`, {
+        headers: getAuthHeaders()
+      });
+      if (response.ok) {
+        const data = await response.json();
+        const tasks = data.data || [];
+        const now = new Date();
+        const weekAgo = new Date(now);
+        weekAgo.setDate(now.getDate() - 7);
+        setIncomingTasks(tasks.filter((t: any) => t.status === 'pending'));
+        setInProgressTasks(tasks.filter((t: any) => t.status === 'in_progress'));
+        setWeeklyFinishedTasks(tasks.filter((t: any) => {
+          if (t.status !== 'completed') return false;
+          const comp = new Date(t.completed_at);
+          return !isNaN(comp.getTime()) && comp >= weekAgo;
+        }));
+      }
+    } catch (error) {
+      console.error('Failed to fetch task summary:', error);
     }
   };
 
@@ -182,6 +212,36 @@ const Dashboard: React.FC<{ onLogout?: () => void }> = ({ onLogout }) => {
               Electronic Records &amp; Document Management System
             </p>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1rem' }}>
+              <div style={{
+                padding: '1rem',
+                border: '1px solid #ddd',
+                borderRadius: '8px',
+                backgroundColor: '#e3f2fd'
+              }}>
+                <h3 style={{ margin: '0 0 0.5rem 0', color: '#1565c0', fontSize: '0.9rem' }}>Incoming Tasks</h3>
+                <p style={{ fontSize: '1.75rem', fontWeight: 'bold', margin: 0, color: '#0d47a1' }}>{incomingTasks.length}</p>
+              </div>
+              <div style={{
+                padding: '1rem',
+                border: '1px solid #ddd',
+                borderRadius: '8px',
+                backgroundColor: '#f3e5f5'
+              }}>
+                <h3 style={{ margin: '0 0 0.5rem 0', color: '#6a1b9a', fontSize: '0.9rem' }}>In Progress</h3>
+                <p style={{ fontSize: '1.75rem', fontWeight: 'bold', margin: 0, color: '#4a148c' }}>{inProgressTasks.length}</p>
+              </div>
+              <div style={{
+                padding: '1rem',
+                border: '1px solid #ddd',
+                borderRadius: '8px',
+                backgroundColor: '#fff3e0'
+              }}>
+                <h3 style={{ margin: '0 0 0.5rem 0', color: '#e65100', fontSize: '0.9rem' }}>Finished (Last 7 Days)</h3>
+                <p style={{ fontSize: '1.75rem', fontWeight: 'bold', margin: 0, color: '#e65100' }}>{weeklyFinishedTasks.length}</p>
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1rem', marginTop: '1.5rem' }}>
               {menuItems.filter(item => item.id !== 'dashboard').map(item => (
                 <button
                   key={item.id}

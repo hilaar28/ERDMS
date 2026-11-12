@@ -16,6 +16,10 @@ interface Task {
   assigner_full_name: string;
   folio_number?: string;
   requirement_type?: string;
+  recommender_username?: string;
+  recommender_full_name?: string;
+  approver_username?: string;
+  approver_full_name?: string;
   status: string;
   priority: string;
   due_date: string;
@@ -55,7 +59,9 @@ const TaskAssignment: React.FC<TaskAssignmentProps> = ({ API_URL }) => {
     assignedTo: '',
     priority: 'normal',
     dueDate: '',
-    requirementType: ''
+    requirementType: '',
+    recommenderId: '',
+    approverId: ''
   });
 
   const [assignForm, setAssignForm] = useState({
@@ -143,7 +149,17 @@ const TaskAssignment: React.FC<TaskAssignmentProps> = ({ API_URL }) => {
     }
 
     if (!taskForm.requirementType) {
-      setMessage({ type: 'error', text: 'Please specify the requirement type (approval, recommendation, or for information)' });
+      setMessage({ type: 'error', text: 'Please specify the requirement type (approval, recommendation, for recommendation and approval, or for information)' });
+      return;
+    }
+
+    if (taskForm.requirementType === 'recommendation_approval' && !taskForm.recommenderId) {
+      setMessage({ type: 'error', text: 'Recommender must be assigned for recommendation and approval tasks' });
+      return;
+    }
+
+    if (taskForm.requirementType === 'recommendation_approval' && !taskForm.approverId) {
+      setMessage({ type: 'error', text: 'Approver must be assigned for recommendation and approval tasks' });
       return;
     }
 
@@ -164,22 +180,24 @@ const TaskAssignment: React.FC<TaskAssignmentProps> = ({ API_URL }) => {
           'Content-Type': 'application/json',
           ...getAuthHeaders()
         },
-        body: JSON.stringify({
-          title: taskForm.title,
-          description: taskForm.description,
-          documentId: taskForm.documentId ? parseInt(taskForm.documentId) : null,
-          folioNumberId,
-          requirementType: taskForm.requirementType || null,
-          assignedTo: taskForm.assignedTo ? parseInt(taskForm.assignedTo) : null,
-          priority: taskForm.priority,
-          dueDate: taskForm.dueDate || null
-        })
+         body: JSON.stringify({
+           title: taskForm.title,
+           description: taskForm.description,
+           documentId: taskForm.documentId ? parseInt(taskForm.documentId) : null,
+           folioNumberId,
+           requirementType: taskForm.requirementType || null,
+           assignedTo: taskForm.assignedTo ? parseInt(taskForm.assignedTo) : null,
+           priority: taskForm.priority,
+           dueDate: taskForm.dueDate || null,
+           recommenderId: taskForm.requirementType === 'recommendation_approval' && taskForm.recommenderId ? parseInt(taskForm.recommenderId) : null,
+           approverId: taskForm.requirementType === 'recommendation_approval' && taskForm.approverId ? parseInt(taskForm.approverId) : null
+         })
       });
 
       const data = await response.json();
       if (response.ok) {
         setMessage({ type: 'success', text: 'Task created successfully' });
-        setTaskForm({ title: '', description: '', documentId: '', assignedTo: '', priority: 'normal', dueDate: '', requirementType: '' });
+         setTaskForm({ title: '', description: '', documentId: '', assignedTo: '', priority: 'normal', dueDate: '', requirementType: '', recommenderId: '', approverId: '' });
         setShowCreateForm(false);
         viewMode === 'my' ? fetchMyTasks() : fetchTasks();
       } else {
@@ -276,8 +294,38 @@ const TaskAssignment: React.FC<TaskAssignmentProps> = ({ API_URL }) => {
           >
             My Tasks
           </button>
-        </div>
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
+            </div>
+            {taskForm.requirementType === 'recommendation_approval' && (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '0.25rem' }}>Recommender</label>
+                  <select
+                    value={taskForm.recommenderId}
+                    onChange={(e) => setTaskForm({...taskForm, recommenderId: e.target.value})}
+                    style={{ width: '100%', padding: '0.5rem', border: '1px solid #ddd', borderRadius: '4px' }}
+                  >
+                    <option value="">-- Select Recommender --</option>
+                    {users.map(user => (
+                      <option key={user.id} value={user.id}>{user.full_name || user.username}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '0.25rem' }}>Approver</label>
+                  <select
+                    value={taskForm.approverId}
+                    onChange={(e) => setTaskForm({...taskForm, approverId: e.target.value})}
+                    style={{ width: '100%', padding: '0.5rem', border: '1px solid #ddd', borderRadius: '4px' }}
+                  >
+                    <option value="">-- Select Approver --</option>
+                    {users.map(user => (
+                      <option key={user.id} value={user.id}>{user.full_name || user.username}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            )}
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
           <button
             onClick={() => { setShowCreateForm(true); setShowAssignForm(false); }}
             style={{ padding: '0.5rem 1rem', backgroundColor: '#fd7e14', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
@@ -340,6 +388,7 @@ const TaskAssignment: React.FC<TaskAssignmentProps> = ({ API_URL }) => {
                 <option value="">-- Select Requirement --</option>
                 <option value="approval">Approval</option>
                 <option value="recommendation">Recommendation</option>
+                <option value="recommendation_approval">Recommendation and Approval</option>
                 <option value="information">For Information</option>
               </select>
             </div>
@@ -506,11 +555,20 @@ const TaskAssignment: React.FC<TaskAssignmentProps> = ({ API_URL }) => {
                 Folio: {task.folio_number}
               </div>
             )}
-            {task.requirement_type && (
-              <div style={{ fontSize: '0.75rem', color: '#555', marginBottom: '0.25rem' }}>
-                Requirement: {task.requirement_type === 'information' ? 'For Information' : task.requirement_type.charAt(0).toUpperCase() + task.requirement_type.slice(1)}
-              </div>
-            )}
+             {task.requirement_type && (
+               <div style={{ fontSize: '0.75rem', color: '#555', marginBottom: '0.25rem' }}>
+                 Requirement: {task.requirement_type === 'information'
+                   ? 'For Information'
+                   : task.requirement_type === 'recommendation_approval'
+                     ? 'Recommendation &amp; Approval'
+                     : task.requirement_type.charAt(0).toUpperCase() + task.requirement_type.slice(1)}
+               </div>
+             )}
+             {task.requirement_type === 'recommendation_approval' && (
+               <div style={{ fontSize: '0.75rem', color: '#555', marginBottom: '0.25rem' }}>
+                 Recommender: {task.recommender_full_name || task.recommender_username || 'Not assigned'} | Approver: {task.approver_full_name || task.approver_username || 'Not assigned'}
+               </div>
+             )}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{
                 padding: '0.15rem 0.5rem',

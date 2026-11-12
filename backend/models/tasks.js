@@ -50,6 +50,9 @@ export async function initializeTaskTables() {
     await pool.query(`ALTER TABLE tasks ADD COLUMN IF NOT EXISTS requirement_type VARCHAR(50)`);
     await pool.query(`CREATE INDEX IF NOT EXISTS idx_tasks_requirement_type ON tasks(requirement_type)`);
 
+    await pool.query(`ALTER TABLE tasks ADD COLUMN IF NOT EXISTS recommendation_approver_id INTEGER REFERENCES users(id) ON DELETE SET NULL`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_tasks_recommendation_approver ON tasks(recommendation_approver_id)`);
+
     await pool.query(`
       CREATE TABLE IF NOT EXISTS task_assignments (
         id SERIAL PRIMARY KEY,
@@ -110,37 +113,67 @@ export async function createTask({
   title,
   description,
   documentId,
-  folioNumberId,
+   folioNumberId,
   assignedTo,
   assignedBy,
   priority = 'normal',
   dueDate = null,
-  requirementType = null
+  requirementType = null,
+  recommenderId = null,
+  approverId = null
 }) {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
 
     const taskResult = await client.query(
-      `INSERT INTO tasks (title, description, document_id, folio_number_id, assigned_to, assigned_by, priority, due_date, requirement_type)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      `INSERT INTO tasks (title, description, document_id, folio_number_id, assigned_to, assigned_by, priority, due_date, requirement_type, recommendation_approver_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
        RETURNING *`,
-      [title, description, documentId, folioNumberId || null, assignedTo, assignedBy, priority, dueDate, requirementType || null]
+      [title, description, documentId, folioNumberId || null, assignedTo, assignedBy, priority, dueDate, requirementType || null, approverId || null]
     );
 
     const task = taskResult.rows[0];
 
     if (assignedTo) {
       await client.query(
-        `INSERT INTO task_assignments (task_id, user_id, assigned_by)
-         VALUES ($1, $2, $3)`,
-        [task.id, assignedTo, assignedBy]
+        `INSERT INTO task_assignments (task_id, user_id, assigned_by, role_in_task)
+         VALUES ($1, $2, $3, $4)`,
+        [task.id, assignedTo, assignedBy, 'assignee']
       );
 
       await client.query(
         `INSERT INTO notifications (user_id, task_id, document_id, message, notification_type, metadata)
          VALUES ($1, $2, $3, $4, $5, $6)`,
         [assignedTo, task.id, documentId, `New task assigned: ${title}`, 'task_assignment', JSON.stringify({ priority, dueDate })]
+      );
+    }
+
+    if (requirementType === 'recommendation_approval' && recommenderId) {
+      await client.query(
+        `INSERT INTO task_assignments (task_id, user_id, assigned_by, role_in_task)
+         VALUES ($1, $2, $3, $4)`,
+        [task.id, recommenderId, assignedBy, 'recommender']
+      );
+
+      await client.query(
+        `INSERT INTO notifications (user_id, task_id, document_id, message, notification_type, metadata)
+         VALUES ($1, $2, $3, $4, $5, $6)`,
+        [recommenderId, task.id, documentId, `You are requested to provide a recommendation for task: ${title}`, 'task_recommendation', JSON.stringify({ priority })]
+      );
+    }
+
+    if (requirementType === 'approval' && approverId) {
+      await client.query(
+        `INSERT INTO task_assignments (task_id, user_id, assigned_by, role_in_task)
+         VALUES ($1, $2, $3, $4)`,
+        [task.id, approverId, assignedBy, 'approver']
+      );
+
+      await client.query(
+        `INSERT INTO notifications (user_id, task_id, document_id, message, notification_type, metadata)
+         VALUES ($1, $2, $3, $4, $5, $6)`,
+        [approverId, task.id, documentId, `You are requested to approve task: ${title}`, 'task_approval', JSON.stringify({ priority })]
       );
     }
 
@@ -173,7 +206,7 @@ export async function createNotification({
 
 export async function getTasks(filters = {}) {
   let query = `
-    SELECT t.*,
+     SELECT t.*,
            d.name as document_name,
            fn.folio_number as folio_number,
            d.file_number,
@@ -181,13 +214,20 @@ export async function getTasks(filters = {}) {
            assignee.username as assignee_username,
            assignee.full_name as assignee_full_name,
            assigner.username as assigner_username,
-           assigner.full_name as assigner_full_name
-    FROM tasks t
-    LEFT JOIN documents d ON t.document_id = d.id
-    LEFT JOIN folio_numbers fn ON t.folio_number_id = fn.id
-    LEFT JOIN users assignee ON t.assigned_to = assignee.id
-    LEFT JOIN users assigner ON t.assigned_by = assigner.id
-    WHERE 1=1
+           assigner.full_name as assigner_full_name,
+           recommender.username as recommender_username,
+           recommender.full_name as recommender_full_name,
+           approver.username as approver_username,
+           approver.full_name as approver_full_name
+     FROM tasks t
+     LEFT JOIN documents d ON t.document_id = d.id
+     LEFT JOIN folio_numbers fn ON t.folio_number_id = fn.id
+     LEFT JOIN users assignee ON t.assigned_to = assignee.id
+     LEFT JOIN users assigner ON t.assigned_by = assigner.id
+     LEFT JOIN users recommender ON t.recommendation_approver_id = recommender.id
+     LEFT JOIN task_assignments ta_approver ON ta_approver.task_id = t.id AND ta_approver.role_in_task = 'approver'
+     LEFT JOIN users approver ON ta_approver.user_id = approver.id
+     WHERE 1=1
   `;
   const params = [];
   let paramCount = 0;
@@ -247,11 +287,18 @@ export async function getTaskById(id) {
            assignee.username as assignee_username,
            assignee.full_name as assignee_full_name,
            assigner.username as assigner_username,
-           assigner.full_name as assigner_full_name
+           assigner.full_name as assigner_full_name,
+           recommender.username as recommender_username,
+           recommender.full_name as recommender_full_name,
+           approver.username as approver_username,
+           approver.full_name as approver_full_name
     FROM tasks t
     LEFT JOIN documents d ON t.document_id = d.id
     LEFT JOIN users assignee ON t.assigned_to = assignee.id
     LEFT JOIN users assigner ON t.assigned_by = assigner.id
+    LEFT JOIN users recommender ON t.recommendation_approver_id = recommender.id
+    LEFT JOIN task_assignments ta_approver ON ta_approver.task_id = t.id AND ta_approver.role_in_task = 'approver'
+    LEFT JOIN users approver ON ta_approver.user_id = approver.id
     WHERE t.id = $1`,
     [id]
   );

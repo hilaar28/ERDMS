@@ -22,6 +22,7 @@ import auditTrailRouter from './routes/auditTrail.js';
 import tasksRouter from './routes/tasks.js';
 import classificationRouter from './routes/classification.js';
 import foldersRouter from './routes/folders.js';
+import assistantRouter from './routes/assistant.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -55,6 +56,7 @@ app.use('/api/audit', auditTrailRouter);
 app.use('/api/tasks', tasksRouter);
 app.use('/api/classification', classificationRouter);
 app.use('/api/folders', foldersRouter);
+app.use('/api/assistant', assistantRouter);
 
 // Health check
 app.get('/health', (req, res) => {
